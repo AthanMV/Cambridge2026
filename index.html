@@ -448,7 +448,7 @@ tr:hover td{background:var(--bg3)}
       <i class="ti ti-sun theme-icon-sun"></i>
       <i class="ti ti-moon theme-icon-moon"></i>
     </button>
-    <span class="version-tag" title="Versión del software">v2.11.0</span>
+    <span class="version-tag" title="Versión del software">v2.14.0</span>
   </div>
 </div>
 
@@ -463,6 +463,7 @@ tr:hover td{background:var(--bg3)}
   <div id="page-students" class="page-inner" style="display:none"></div>
   <div id="page-teachers" class="page-inner" style="display:none"></div>
   <div id="page-grades" class="page-inner" style="display:none"></div>
+  <div id="page-oral" class="page-inner" style="display:none"></div>
   <div id="page-journal" class="page-inner" style="display:none"></div>
   <div id="page-boletin" class="page-inner" style="display:none"></div>
   <div id="page-waitlist" class="page-inner" style="display:none"></div>
@@ -890,18 +891,91 @@ tr:hover td{background:var(--bg3)}
     </div>
   </div>
 </nav>
+<!-- ══ ORAL MODALS ══ -->
+<div class="overlay" id="m-oral-novel">
+<div class="modal">
+  <div class="modal-header"><div class="modal-title">Novela</div><button class="btn ghost sm" onclick="closeModal('m-oral-novel')"><i class="ti ti-x"></i></button></div>
+  <input type="hidden" id="on-gid">
+  <div class="form-grid c2">
+    <div class="field"><label>Título</label><input id="on-title" placeholder="The Giver"></div>
+    <div class="field"><label>Autor/a</label><input id="on-author" placeholder="Lois Lowry"></div>
+  </div>
+  <div class="field"><label>Edición / nivel (opcional)</label><input id="on-edition" placeholder="Graded reader B1, Penguin..."></div>
+  <div class="field"><label>Sinopsis / notas</label><textarea id="on-synopsis" placeholder="Resumen breve, temas..."></textarea></div>
+  <div class="modal-footer">
+    <button class="btn" onclick="closeModal('m-oral-novel')">Cancelar</button>
+    <button class="btn primary" onclick="saveOralNovel()">Guardar</button>
+  </div>
+</div>
+</div>
+
+<div class="overlay" id="m-oral-unit">
+<div class="modal">
+  <div class="modal-header"><div class="modal-title" id="ou-modal-title">Nuevo tema</div><button class="btn ghost sm" onclick="closeModal('m-oral-unit')"><i class="ti ti-x"></i></button></div>
+  <input type="hidden" id="ou-gid"><input type="hidden" id="ou-id">
+  <div class="field"><label>Nombre del tema</label><input id="ou-name" placeholder="Present Perfect, Travel, Job interviews..."></div>
+  <div class="field" style="margin-bottom:6px"><label>Preguntas</label></div>
+  <div id="ou-qlist"></div>
+  <button class="btn sm" onclick="addOralQRow('ou-qlist')"><i class="ti ti-plus"></i> Agregar pregunta</button>
+  <div class="modal-footer">
+    <button class="btn" onclick="closeModal('m-oral-unit')">Cancelar</button>
+    <button class="btn primary" onclick="saveOralUnit()">Guardar</button>
+  </div>
+</div>
+</div>
+
+<div class="overlay" id="m-oral-chapter">
+<div class="modal">
+  <div class="modal-header"><div class="modal-title" id="oc-modal-title">Nuevo capítulo</div><button class="btn ghost sm" onclick="closeModal('m-oral-chapter')"><i class="ti ti-x"></i></button></div>
+  <input type="hidden" id="oc-gid"><input type="hidden" id="oc-id">
+  <div class="form-grid c2">
+    <div class="field"><label>N°</label><input id="oc-n" placeholder="1"></div>
+    <div class="field"><label>Se toma (fecha)</label><input type="date" id="oc-date"></div>
+  </div>
+  <div class="field"><label>Título del capítulo</label><input id="oc-title" placeholder="Chapter 1 — The Beginning"></div>
+  <div class="field"><label>Notas (opcional)</label><textarea id="oc-notes" placeholder="Vocabulario clave, páginas..."></textarea></div>
+  <div class="field" style="margin-bottom:6px"><label>Preguntas del capítulo</label></div>
+  <div id="oc-qlist"></div>
+  <button class="btn sm" onclick="addOralQRow('oc-qlist')"><i class="ti ti-plus"></i> Agregar pregunta</button>
+  <div class="modal-footer">
+    <button class="btn" onclick="closeModal('m-oral-chapter')">Cancelar</button>
+    <button class="btn primary" onclick="saveOralChapter()">Guardar</button>
+  </div>
+</div>
+</div>
+
+<div class="overlay" id="m-oral-genq">
+<div class="modal">
+  <div class="modal-header"><div class="modal-title">Preguntas generales del libro</div><button class="btn ghost sm" onclick="closeModal('m-oral-genq')"><i class="ti ti-x"></i></button></div>
+  <input type="hidden" id="og-gid">
+  <div id="og-qlist"></div>
+  <button class="btn sm" onclick="addOralQRow('og-qlist')"><i class="ti ti-plus"></i> Agregar pregunta</button>
+  <div class="modal-footer">
+    <button class="btn" onclick="closeModal('m-oral-genq')">Cancelar</button>
+    <button class="btn primary" onclick="saveOralGenQ()">Guardar</button>
+  </div>
+</div>
+</div>
+
+<div class="overlay" id="m-oral-practice">
+<div class="modal" style="max-width:640px">
+  <div class="modal-header"><div class="modal-title"><i class="ti ti-player-play"></i> Modo práctica</div><button class="btn ghost sm" onclick="closeOralPractice()"><i class="ti ti-x"></i></button></div>
+  <div id="m-oral-practice-body"></div>
+</div>
+</div>
+
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
 <script>
 
 
-const VERSION='2.11.0';
+const VERSION='2.14.0';
 const SUPA_URL='https://hnusoslzobzuplhdephe.supabase.co';
 const SUPA_KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImhudXNvc2x6b2J6dXBsaGRlcGhlIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzg3MzEwNjQsImV4cCI6MjA5NDMwNzA2NH0.HTSM4lp4Dpl_voNAPYlWcNqvUQaaXDH1OTgjkUrWAI8';
 const MONTHS=['ENERO','FEBRERO','MARZO','ABRIL','MAYO','JUNIO','JULIO','AGOSTO','SEPTIEMBRE','OCTUBRE','NOVIEMBRE','DICIEMBRE'];
 const DAY_SHORT=['Dom','Lun','Mar','Mié','Jue','Vie','Sáb'];
 const DAY_FULL=['domingo','lunes','martes','miércoles','jueves','viernes','sábado'];
 
-let db={groups:[],students:[],payments:[],families:[],teachers:[],teacherPayments:[],attendance:{},dayNotes:{},settings:{},grades:{},cambridge2025:[],classTypes:[],classLogs:{},schools:[],journal:{},exams:[],boletin:{},waitlist:[],expenses:[],quickNotes:[]};
+let db={groups:[],students:[],payments:[],families:[],teachers:[],teacherPayments:[],attendance:{},dayNotes:{},settings:{},grades:{},cambridge2025:[],classTypes:[],classLogs:{},schools:[],journal:{},exams:[],boletin:{},waitlist:[],expenses:[],quickNotes:[],oral:{}};
 
 // Grade subjects — fixed 8, split into 2 categories
 const GRADE_SUBJECTS=[
@@ -965,7 +1039,7 @@ function dbHash(d){
     const attKeys=Object.values(d.attendance||{}).reduce((a,mk)=>a+Object.keys(mk).length,0);
     const jrnKeys=Object.values(d.journal||{}).reduce((a,g)=>a+Object.keys(g).length,0);
     const dayN=Object.values(d.dayNotes||{}).reduce((a,m)=>a+Object.keys(m).length,0);
-    return (d.payments||[]).length+'-'+(d.students||[]).length+'-'+(d.teacherPayments||[]).length+'-'+attKeys+'-'+dayN+'-'+jrnKeys+'-'+(d.grades?JSON.stringify(d.grades).length:0);
+    return (d.payments||[]).length+'-'+(d.students||[]).length+'-'+(d.teacherPayments||[]).length+'-'+attKeys+'-'+dayN+'-'+jrnKeys+'-'+(d.grades?JSON.stringify(d.grades).length:0)+'-'+(d.oral?JSON.stringify(d.oral).length:0);
   }catch(e){return'';}
 }
 
@@ -994,6 +1068,7 @@ async function loadFromSupabase(){
       if(d.schools)db.schools=d.schools;
       if(d.classLogs)db.classLogs=d.classLogs;
       if(d.journal)db.journal=d.journal;
+      if(d.oral)db.oral=d.oral;
       }
     } else {
       seedData();
@@ -1021,7 +1096,8 @@ function dbDataCount(data){
     (data.teachers||[]).length * 2 +
     (data.families||[]).length * 2 +
     Object.values(data.attendance||{}).reduce((a,m)=>a+Object.keys(m).length,0) +
-    Object.values(data.journal||{}).reduce((a,g)=>a+Object.keys(g).length,0)
+    Object.values(data.journal||{}).reduce((a,g)=>a+Object.keys(g).length,0) +
+    Object.keys(data.oral||{}).length
   );
 }
 
@@ -1142,6 +1218,8 @@ function deepMergeDB(remote, local){
   merged.attendance=mergeDeepObj(remote.attendance||{}, local.attendance||{});
   merged.dayNotes=mergeDeepObj(remote.dayNotes||{}, local.dayNotes||{});
   merged.boletin=mergeDeepObj(remote.boletin||{}, local.boletin||{});
+  // Oral: per-group prefer local (single admin, mirrors journal strategy)
+  merged.oral=mergeDeepObj(remote.oral||{}, local.oral||{});
 
   return merged;
 }
@@ -1279,6 +1357,7 @@ function startPolling(){
       if(d.schools)db.schools=d.schools;
       if(d.classLogs)db.classLogs=d.classLogs;
       if(d.journal)db.journal=d.journal;
+      if(d.oral)db.oral=d.oral;
         refreshCurrentPage();
         toast('Datos actualizados desde otro dispositivo');
       }
@@ -1294,7 +1373,7 @@ function setSyncStatus(state,label){
 }
 
 function refreshCurrentPage(){
-  const renders={boletin:renderBoletin,waitlist:renderWaitlist,expenses:renderExpenses,dashboard:renderDashboard,timetable:renderTimetable,groups:renderGroups,payments:renderPayments,extrapay:renderExtraPay,families:renderFamilies,attendance:()=>{if(document.getElementById('att-body'))renderAttendance();},students:renderStudents,teachers:renderTeachers,grades:renderGrades,journal:renderJournal,bills:renderBills,datamanager:renderDataManager,settings:renderSettings};
+  const renders={boletin:renderBoletin,waitlist:renderWaitlist,expenses:renderExpenses,dashboard:renderDashboard,timetable:renderTimetable,groups:renderGroups,payments:renderPayments,extrapay:renderExtraPay,families:renderFamilies,attendance:()=>{if(document.getElementById('att-body'))renderAttendance();},students:renderStudents,teachers:renderTeachers,grades:renderGrades,oral:renderOral,journal:renderJournal,bills:renderBills,datamanager:renderDataManager,settings:renderSettings};
   if(renders[currentPage]) renders[currentPage]();
   updatePendingBadge();
 }
@@ -1511,7 +1590,7 @@ function syncThemeUI(theme){
 
 /* ---- NAV ---- */
 // Valid pages for URL routing
-const VALID_PAGES=['dashboard','timetable','journal','groups','payments','families','attendance','students','teachers','grades','exams','boletin','bills','datamanager','settings','waitlist','expenses','extrapay'];
+const VALID_PAGES=['dashboard','timetable','journal','groups','payments','families','attendance','students','teachers','grades','oral','exams','boletin','bills','datamanager','settings','waitlist','expenses','extrapay'];
 
 
 // ══════════════════════════════════════════════════════════════════════
@@ -1532,6 +1611,7 @@ const NAV_DEFAULTS = [
   {id:'students',    label:'Alumnos',          icon:'user',             cat:'Gestión'},
   {id:'teachers',    label:'Profesores',       icon:'award',            cat:'Administración'},
   {id:'grades',      label:'Notas 2026',       icon:'clipboard-list',   cat:'Administración'},
+  {id:'oral',        label:'Oral',             icon:'microphone-2',     cat:'Administración'},
   {id:'exams',       label:'Exámenes',         icon:'checklist',        cat:'Administración'},
   {id:'boletin',     label:'Boletín',          icon:'certificate',      cat:'Administración'},
   {id:'expenses',    label:'Gastos',           icon:'receipt-2',        cat:'Administración'},
@@ -2047,7 +2127,7 @@ function nav(page,el){
     history.pushState({page}, '', '#'+page);
   }
 
-  const renders={dashboard:renderDashboard,timetable:renderTimetable,groups:renderGroups,payments:renderPayments,extrapay:renderExtraPay,families:renderFamilies,attendance:initAttendance,students:renderStudents,teachers:renderTeachers,grades:renderGrades,exams:renderExams,boletin:renderBoletin,waitlist:renderWaitlist,expenses:renderExpenses,journal:renderJournal,bills:renderBills,datamanager:renderDataManager,settings:renderSettings};
+  const renders={dashboard:renderDashboard,timetable:renderTimetable,groups:renderGroups,payments:renderPayments,extrapay:renderExtraPay,families:renderFamilies,attendance:initAttendance,students:renderStudents,teachers:renderTeachers,grades:renderGrades,oral:renderOral,exams:renderExams,boletin:renderBoletin,waitlist:renderWaitlist,expenses:renderExpenses,journal:renderJournal,bills:renderBills,datamanager:renderDataManager,settings:renderSettings};
   if(renders[page])renders[page]();
 }
 
@@ -5967,6 +6047,509 @@ document.addEventListener('keydown', function(e){
   }
 });
 
+
+
+
+/* ════════════════════════════════════════════════════════════════
+   ORAL — dos partes:
+   1) Preguntas de la UNIDAD (temas) + modo práctica / aleatorizador
+   2) LIBRO: novela + capítulos (sync Diario), cada capítulo con sus
+      preguntas + preguntas generales del libro
+   Store: db.oral[gid] = { novel, chapters[], generalQuestions[], units[], examDate }
+   ════════════════════════════════════════════════════════════════ */
+
+function oEsc(s){return String(s==null?'':s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');}
+
+// Lectura sin efectos secundarios (con migración suave desde v2.12)
+function oralGet(gid){
+  const o=(db.oral||{})[gid]||{};
+  const legacyGen=Array.isArray(o.questions)?o.questions.map(q=>({id:q.id||uid(),text:q.text||''})):[];
+  return {
+    novel:o.novel||{title:'',author:'',edition:'',synopsis:''},
+    chapters:(Array.isArray(o.chapters)?o.chapters:[]).map(c=>({...c,questions:Array.isArray(c.questions)?c.questions:[]})),
+    generalQuestions:Array.isArray(o.generalQuestions)?o.generalQuestions:legacyGen,
+    units:Array.isArray(o.units)?o.units:[],
+    examDate:o.examDate||''
+  };
+}
+// Estructura escribible (hace la migración una sola vez)
+function oralEnsure(gid){
+  if(!db.oral)db.oral={};
+  if(!db.oral[gid])db.oral[gid]={};
+  const o=db.oral[gid];
+  if(!o.novel)o.novel={title:'',author:'',edition:'',synopsis:''};
+  if(!Array.isArray(o.chapters))o.chapters=[];
+  o.chapters.forEach(c=>{if(!Array.isArray(c.questions))c.questions=[];});
+  if(!Array.isArray(o.generalQuestions)){
+    o.generalQuestions=Array.isArray(o.questions)?o.questions.map(q=>({id:q.id||uid(),text:q.text||''})):[];
+  }
+  if(!Array.isArray(o.units))o.units=[];
+  if(typeof o.examDate!=='string')o.examDate='';
+  // limpiar restos viejos
+  if(o.questions)delete o.questions;
+  if(o.rubric)delete o.rubric;
+  return o;
+}
+
+function oralFmtDate(ds){
+  if(!ds)return '';
+  const d=new Date(ds+'T12:00:00');
+  return d.toLocaleDateString('es-AR',{weekday:'short',day:'numeric',month:'short'});
+}
+
+/* ── PÁGINA ── */
+function renderOral(){
+  if(!window._oralGid)window._oralGid='';
+  const sel=document.getElementById('oral-gid');
+  const curGid=(sel&&sel.value)||window._oralGid||(db.groups[0]?db.groups[0].id:'');
+  window._oralGid=curGid;
+
+  const groupOpts=db.groups.map(g=>`<option value="${g.id}"${g.id===curGid?' selected':''}>${oEsc(g.name)}</option>`).join('');
+  const oralSib=curGid?(typeof getExamSiblingGroup==='function'?getExamSiblingGroup(curGid):null):null;
+
+  document.getElementById('page-oral').innerHTML=`
+    <div class="page-header">
+      <div><div class="page-title">Oral</div><div class="page-subtitle">Preguntas de la unidad · Libro · Examen</div></div>
+    </div>
+    <div style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:16px;align-items:flex-end">
+      <div class="field" style="flex:1;min-width:160px"><label>Grupo</label>
+        <select id="oral-gid" onchange="window._oralGid=this.value;renderOral()">
+          <option value="">Seleccionar...</option>${groupOpts}
+        </select>
+      </div>
+      ${oralSib?`<button class="btn sm" style="color:var(--blue)" title="Copiar todo el material oral a ${oEsc(oralSib.name)} para que coincidan" onclick="copyOralToSibling('${curGid}')"><i class="ti ti-copy"></i> Copiar a ${oEsc(oralSib.name)}</button>`:''}
+    </div>
+    ${!curGid
+      ? '<div class="empty"><i class="ti ti-microphone-2"></i>Seleccioná un grupo para gestionar su oral</div>'
+      : oralUnitsCard(curGid)+oralBookCard(curGid)+oralExamCard(curGid)}`;
+}
+
+/* ════════ PARTE 1 — PREGUNTAS DE LA UNIDAD ════════ */
+function oralUnitsCard(gid){
+  const o=oralGet(gid);
+  const units=o.units;
+  const totalQ=units.reduce((a,u)=>a+(u.questions||[]).length,0);
+  let body;
+  if(!units.length){
+    body=`<div class="empty" style="padding:20px">Sin temas cargados todavía</div>`;
+  }else{
+    body=units.map(u=>`
+      <div style="display:flex;justify-content:space-between;align-items:center;gap:10px;padding:10px 0;border-bottom:1px solid var(--border)">
+        <div style="flex:1">
+          <div style="font-weight:600;font-size:14px">${oEsc(u.name)||'(sin nombre)'}</div>
+          <div style="font-size:12px;color:var(--text3)">${(u.questions||[]).length} pregunta${(u.questions||[]).length!==1?'s':''}</div>
+        </div>
+        <div style="white-space:nowrap">
+          ${(u.questions||[]).length?`<button class="btn ghost sm" onclick="startOralPractice('${gid}',{type:'unit',id:'${u.id}'})" title="Practicar este tema"><i class="ti ti-player-play"></i></button>`:''}
+          <button class="btn ghost sm" onclick="openOralUnit('${gid}','${u.id}')" title="Editar"><i class="ti ti-edit"></i></button>
+          <button class="btn ghost sm" onclick="deleteOralUnit('${gid}','${u.id}')" title="Eliminar" style="color:var(--red)"><i class="ti ti-trash"></i></button>
+        </div>
+      </div>`).join('');
+  }
+  return `<div class="card">
+    <div style="display:flex;justify-content:space-between;align-items:center;gap:10px;margin-bottom:10px;flex-wrap:wrap">
+      <div class="card-title" style="margin:0"><i class="ti ti-list-check"></i> Preguntas de la unidad${units.length?` · ${totalQ}`:''}</div>
+      <div style="display:flex;gap:6px">
+        ${totalQ?`<button class="btn primary sm" onclick="startOralPractice('${gid}',{type:'allUnits'})"><i class="ti ti-player-play"></i> Modo práctica</button>`:''}
+        <button class="btn sm" onclick="openOralUnit('${gid}','')"><i class="ti ti-plus"></i> Tema</button>
+      </div>
+    </div>
+    ${body}
+  </div>`;
+}
+function deleteOralUnit(gid,uId){
+  if(!confirm('¿Eliminar este tema y sus preguntas?'))return;
+  const o=oralEnsure(gid);
+  o.units=o.units.filter(x=>x.id!==uId);
+  scheduleSave();renderOral();
+}
+function openOralUnit(gid,uId){
+  const o=oralGet(gid);
+  document.getElementById('ou-gid').value=gid;
+  document.getElementById('ou-id').value=uId||'';
+  let u={name:'',questions:[]};
+  if(uId){const f=o.units.find(x=>x.id===uId);if(f)u=f;}
+  document.getElementById('ou-name').value=u.name||'';
+  document.getElementById('ou-modal-title').textContent=uId?'Editar tema':'Nuevo tema';
+  document.getElementById('ou-qlist').innerHTML=oralQEditorRows(u.questions);
+  openModal('m-oral-unit');
+}
+function saveOralUnit(){
+  const gid=document.getElementById('ou-gid').value;
+  const id=document.getElementById('ou-id').value;
+  const name=document.getElementById('ou-name').value.trim();
+  const questions=oralCollectQ('ou-qlist');
+  if(!name)return toast('Poné un nombre de tema','error');
+  const o=oralEnsure(gid);
+  if(id){
+    const u=o.units.find(x=>x.id===id);
+    if(u){u.name=name;u.questions=questions;}
+  }else{
+    o.units.push({id:uid(),name,questions});
+  }
+  scheduleSave();closeModal('m-oral-unit');renderOral();
+  toast('Tema guardado ✓');
+}
+
+/* ── Editor reutilizable de listas de preguntas ── */
+function oralQEditorRows(questions){
+  const rows=(questions||[]).map(q=>oralQRow(q.id||uid(),q.text||'')).join('');
+  return rows||'';
+}
+function oralQRow(qid,text){
+  return `<div class="oq-row" data-id="${qid}" style="display:flex;gap:8px;align-items:flex-start;margin-bottom:8px">
+    <textarea class="oq-text" rows="1" style="flex:1;background:var(--bg3);border:1px solid var(--border2);border-radius:6px;padding:7px 10px;color:var(--text);font-family:inherit;font-size:13px;resize:vertical;min-height:36px">${oEsc(text)}</textarea>
+    <button type="button" class="btn ghost sm" onclick="this.parentElement.remove()" style="color:var(--red);margin-top:2px"><i class="ti ti-x"></i></button>
+  </div>`;
+}
+function addOralQRow(listId){
+  const wrap=document.getElementById(listId);
+  const tmp=document.createElement('div');
+  tmp.innerHTML=oralQRow(uid(),'');
+  const row=tmp.firstElementChild;
+  wrap.appendChild(row);
+  const ta=row.querySelector('.oq-text'); if(ta)ta.focus();
+}
+function oralCollectQ(listId){
+  const out=[];
+  document.querySelectorAll('#'+listId+' .oq-row').forEach(r=>{
+    const t=(r.querySelector('.oq-text')?.value||'').trim();
+    if(t)out.push({id:r.getAttribute('data-id')||uid(),text:t});
+  });
+  return out;
+}
+
+/* ════════ PARTE 2 — LIBRO ════════ */
+function oralBookCard(gid){
+  const o=oralGet(gid);
+  const n=o.novel;
+  const hasNovel=n.title||n.author||n.synopsis;
+  const chs=o.chapters.slice().sort((a,b)=>(Number(a.n)||0)-(Number(b.n)||0));
+  const total=chs.length, done=chs.filter(c=>c.done).length;
+  const pct=total?Math.round(done/total*100):0;
+  const genQ=o.generalQuestions||[];
+  const bookQCount=chs.reduce((a,c)=>a+(c.questions||[]).length,0)+genQ.length;
+
+  let chaptersHtml;
+  if(!total){
+    chaptersHtml=`<div class="empty" style="padding:18px">Sin capítulos cargados</div>`;
+  }else{
+    chaptersHtml=`<div class="table-wrap"><table>
+      <thead><tr><th style="width:34px"></th><th style="width:42px">N°</th><th>Capítulo</th><th style="width:120px">Se toma</th><th style="width:150px"></th></tr></thead>
+      <tbody>${chs.map(c=>{
+        const qn=(c.questions||[]).length;
+        return `<tr style="${c.done?'opacity:.6':''}">
+          <td><input type="checkbox" ${c.done?'checked':''} onchange="toggleOralChapter('${gid}','${c.id}')" title="Leído/tomado" style="width:18px;height:18px;cursor:pointer"></td>
+          <td style="font-weight:600">${oEsc(c.n)}</td>
+          <td>${oEsc(c.title)||'<span style="color:var(--text3)">(sin título)</span>'}${c.notes?`<div style="font-size:11px;color:var(--text3);margin-top:2px;white-space:pre-wrap">${oEsc(c.notes)}</div>`:''}</td>
+          <td style="font-size:12px;color:var(--text2)">${c.date?oralFmtDate(c.date):'<span style="color:var(--text3)">—</span>'}</td>
+          <td style="text-align:right;white-space:nowrap">
+            ${qn?`<button class="btn ghost sm" onclick="startOralPractice('${gid}',{type:'chapter',id:'${c.id}'})" title="Practicar capítulo"><i class="ti ti-player-play"></i></button>`:''}
+            <button class="btn ghost sm" onclick="openOralChapter('${gid}','${c.id}')" title="Editar + preguntas"><i class="ti ti-edit"></i>${qn?` <span style="font-size:11px">${qn}</span>`:''}</button>
+            <button class="btn ghost sm" onclick="deleteOralChapter('${gid}','${c.id}')" title="Eliminar" style="color:var(--red)"><i class="ti ti-trash"></i></button>
+          </td>
+        </tr>`;
+      }).join('')}</tbody></table></div>`;
+  }
+
+  return `<div class="card">
+    <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:10px;margin-bottom:10px;flex-wrap:wrap">
+      <div class="card-title" style="margin:0"><i class="ti ti-book-2"></i> Libro</div>
+      <div style="display:flex;gap:6px">
+        ${bookQCount?`<button class="btn primary sm" onclick="startOralPractice('${gid}',{type:'book'})"><i class="ti ti-player-play"></i> Practicar libro</button>`:''}
+        <button class="btn sm" onclick="openOralNovel('${gid}')"><i class="ti ti-${hasNovel?'edit':'plus'}"></i> Novela</button>
+      </div>
+    </div>
+
+    ${hasNovel?`
+      <div style="margin-bottom:14px">
+        <div style="font-family:var(--font-display);font-size:18px;font-weight:700">${oEsc(n.title)||'(sin título)'}</div>
+        <div style="font-size:13px;color:var(--text2);margin-top:2px">${[n.author,n.edition].filter(Boolean).map(oEsc).join(' · ')}</div>
+        ${n.synopsis?`<div style="font-size:13px;color:var(--text2);margin-top:8px;white-space:pre-wrap;line-height:1.6">${oEsc(n.synopsis)}</div>`:''}
+      </div>`:`<div class="empty" style="padding:16px;margin-bottom:8px">Todavía no cargaste la novela</div>`}
+
+    <div style="display:flex;justify-content:space-between;align-items:center;margin:6px 0 8px">
+      <div style="font-size:12px;font-weight:600;color:var(--text2)">Capítulos${total?` · ${done}/${total} leídos`:''}</div>
+      <button class="btn sm" onclick="openOralChapter('${gid}','')"><i class="ti ti-plus"></i> Capítulo</button>
+    </div>
+    ${total?`<div style="height:6px;background:var(--bg3);border-radius:20px;overflow:hidden;margin-bottom:12px"><div style="height:100%;width:${pct}%;background:var(--accent);transition:width .3s"></div></div>`:''}
+    ${chaptersHtml}
+
+    <div style="display:flex;justify-content:space-between;align-items:center;margin:16px 0 8px;padding-top:14px;border-top:1px solid var(--border)">
+      <div style="font-size:12px;font-weight:600;color:var(--text2)">Preguntas generales del libro${genQ.length?` · ${genQ.length}`:''}</div>
+      <button class="btn sm" onclick="openOralGenQ('${gid}')"><i class="ti ti-edit"></i> Editar</button>
+    </div>
+    ${genQ.length?`<div style="display:flex;flex-direction:column;gap:6px">${genQ.map(q=>`<div style="font-size:13px;color:var(--text2);padding:6px 0;border-bottom:1px solid var(--border)">• ${oEsc(q.text)}</div>`).join('')}</div>`:`<div class="empty" style="padding:14px">Sin preguntas generales</div>`}
+  </div>`;
+}
+
+function toggleOralChapter(gid,chId){
+  const o=oralEnsure(gid);
+  const c=o.chapters.find(x=>x.id===chId);
+  if(c){c.done=!c.done;scheduleSave();renderOral();}
+}
+function deleteOralChapter(gid,chId){
+  if(!confirm('¿Eliminar este capítulo y sus preguntas?'))return;
+  const o=oralEnsure(gid);
+  o.chapters=o.chapters.filter(x=>x.id!==chId);
+  scheduleSave();renderOral();
+}
+function openOralChapter(gid,chId){
+  const o=oralGet(gid);
+  document.getElementById('oc-gid').value=gid;
+  document.getElementById('oc-id').value=chId||'';
+  let c={n:'',title:'',date:'',notes:'',questions:[]};
+  if(chId){const f=o.chapters.find(x=>x.id===chId);if(f)c=f;}
+  else{const maxN=o.chapters.reduce((m,x)=>Math.max(m,Number(x.n)||0),0);c={...c,n:maxN+1};}
+  document.getElementById('oc-n').value=c.n;
+  document.getElementById('oc-title').value=c.title||'';
+  document.getElementById('oc-date').value=c.date||'';
+  document.getElementById('oc-notes').value=c.notes||'';
+  document.getElementById('oc-qlist').innerHTML=oralQEditorRows(c.questions);
+  document.getElementById('oc-modal-title').textContent=chId?'Editar capítulo':'Nuevo capítulo';
+  openModal('m-oral-chapter');
+}
+function saveOralChapter(){
+  const gid=document.getElementById('oc-gid').value;
+  const id=document.getElementById('oc-id').value;
+  const n=document.getElementById('oc-n').value.trim();
+  const title=document.getElementById('oc-title').value.trim();
+  const date=document.getElementById('oc-date').value;
+  const notes=document.getElementById('oc-notes').value.trim();
+  const questions=oralCollectQ('oc-qlist');
+  if(!n&&!title)return toast('Poné al menos un número o título','error');
+  const o=oralEnsure(gid);
+  if(id){
+    const c=o.chapters.find(x=>x.id===id);
+    if(c){c.n=n;c.title=title;c.date=date;c.notes=notes;c.questions=questions;}
+  }else{
+    o.chapters.push({id:uid(),n,title,date,notes,done:false,questions});
+  }
+  scheduleSave();closeModal('m-oral-chapter');renderOral();
+  toast('Capítulo guardado ✓');
+}
+
+function openOralGenQ(gid){
+  const o=oralGet(gid);
+  document.getElementById('og-gid').value=gid;
+  document.getElementById('og-qlist').innerHTML=oralQEditorRows(o.generalQuestions);
+  openModal('m-oral-genq');
+}
+function saveOralGenQ(){
+  const gid=document.getElementById('og-gid').value;
+  const o=oralEnsure(gid);
+  o.generalQuestions=oralCollectQ('og-qlist');
+  scheduleSave();closeModal('m-oral-genq');renderOral();
+  toast('Preguntas guardadas ✓');
+}
+
+/* ── NOVELA ── */
+function openOralNovel(gid){
+  const o=oralGet(gid);
+  document.getElementById('on-gid').value=gid;
+  document.getElementById('on-title').value=o.novel.title||'';
+  document.getElementById('on-author').value=o.novel.author||'';
+  document.getElementById('on-edition').value=o.novel.edition||'';
+  document.getElementById('on-synopsis').value=o.novel.synopsis||'';
+  openModal('m-oral-novel');
+}
+function saveOralNovel(){
+  const gid=document.getElementById('on-gid').value;
+  const o=oralEnsure(gid);
+  o.novel={
+    title:document.getElementById('on-title').value.trim(),
+    author:document.getElementById('on-author').value.trim(),
+    edition:document.getElementById('on-edition').value.trim(),
+    synopsis:document.getElementById('on-synopsis').value.trim()
+  };
+  scheduleSave();closeModal('m-oral-novel');renderOral();
+  toast('Novela guardada ✓');
+}
+
+/* ════════ EXAMEN ════════ */
+function oralExamCard(gid){
+  const o=oralGet(gid);
+  return `<div class="card">
+    <div class="card-title"><i class="ti ti-calendar-event"></i> Examen oral</div>
+    <div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap">
+      <div class="field" style="min-width:200px;margin:0">
+        <label>Fecha del examen</label>
+        <input type="date" value="${oEsc(o.examDate)}" onchange="setOralExamDate('${gid}',this.value)">
+      </div>
+      ${o.examDate?`<span class="badge gold" style="margin-top:18px">${oralFmtDate(o.examDate)}</span>`:''}
+    </div>
+    <div style="font-size:11px;color:var(--text3);margin-top:8px">La fecha aparece como recordatorio en el Diario de ese día.</div>
+  </div>`;
+}
+function setOralExamDate(gid,val){
+  const o=oralEnsure(gid);
+  o.examDate=val||'';
+  scheduleSave();renderOral();
+}
+
+/* ════════ MODO PRÁCTICA / ALEATORIZADOR ════════ */
+let oralPractice=null;
+
+function oralShuffle(arr){
+  const a=arr.slice();
+  for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]];}
+  return a;
+}
+function oralBuildPool(gid,source){
+  const o=oralGet(gid);
+  let qs=[],label='';
+  if(source.type==='unit'){
+    const u=o.units.find(x=>x.id===source.id);
+    qs=(u?.questions||[]).slice(); label='Tema: '+(u?.name||'');
+  }else if(source.type==='allUnits'){
+    o.units.forEach(u=>qs.push(...(u.questions||[]))); label='Todos los temas';
+  }else if(source.type==='chapter'){
+    const c=o.chapters.find(x=>x.id===source.id);
+    qs=(c?.questions||[]).slice(); label='Cap. '+(c?.n||'')+(c?.title?': '+c.title:'');
+  }else if(source.type==='book'){
+    o.chapters.forEach(c=>qs.push(...(c.questions||[])));
+    qs.push(...(o.generalQuestions||[]));
+    label='Libro completo';
+  }
+  return {questions:qs.filter(q=>q&&q.text),label};
+}
+function startOralPractice(gid,source){
+  const {questions,label}=oralBuildPool(gid,source);
+  if(!questions.length){toast('No hay preguntas para practicar','error');return;}
+  const students=db.students.filter(s=>s.groupId===gid);
+  oralPractice={
+    gid,label,
+    queue:oralShuffle(questions),
+    pos:0,
+    total:questions.length,
+    students:oralShuffle(students),
+    sIdx:0,
+    activeSid:students.length?null:'', // null => usar rotación
+    tally:{}
+  };
+  // primer alumno por rotación
+  if(oralPractice.students.length)oralPractice.activeSid=oralPractice.students[0].id;
+  openModal('m-oral-practice');
+  oralPracticeRender();
+}
+function oralCurrentStudent(){
+  if(!oralPractice)return null;
+  if(oralPractice.activeSid){
+    return oralPractice.students.find(s=>s.id===oralPractice.activeSid)||null;
+  }
+  return null;
+}
+function oralPracticeRender(){
+  if(!oralPractice){return;}
+  const p=oralPractice;
+  const el=document.getElementById('m-oral-practice-body');
+  if(!el)return;
+  const finished=p.pos>=p.queue.length;
+  if(finished){ el.innerHTML=oralPracticeResultsHtml(); return; }
+
+  const q=p.queue[p.pos];
+  const stu=oralCurrentStudent();
+  const chips=p.students.map(s=>`<button class="btn sm" onclick="oralSetActive('${s.id}')" style="${s.id===p.activeSid?'background:var(--accent);color:#1a1000;border-color:var(--accent)':''}">${oEsc(s.name.split(' ')[0])}</button>`).join('');
+
+  el.innerHTML=`
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px">
+      <span class="badge gray">${oEsc(p.label)}</span>
+      <span style="font-size:12px;color:var(--text3)">Pregunta ${p.pos+1} de ${p.queue.length}</span>
+    </div>
+    <div style="height:5px;background:var(--bg3);border-radius:20px;overflow:hidden;margin-bottom:18px"><div style="height:100%;width:${Math.round((p.pos/p.queue.length)*100)}%;background:var(--accent)"></div></div>
+
+    <div style="min-height:90px;display:flex;align-items:center;justify-content:center;text-align:center;font-size:20px;font-weight:600;line-height:1.4;padding:10px 4px">${oEsc(q.text)}</div>
+
+    ${p.students.length?`
+      <div style="font-size:11px;text-transform:uppercase;letter-spacing:.06em;color:var(--text3);margin:14px 0 6px">Responde${stu?': '+oEsc(stu.name):''}</div>
+      <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:16px">${chips}</div>`:''}
+
+    <div style="display:flex;gap:8px;flex-wrap:wrap">
+      <button class="btn" style="flex:1;min-width:90px;background:var(--green-bg,rgba(74,222,128,.12));color:var(--green);border-color:var(--green)" onclick="oralMark('bien')"><i class="ti ti-check"></i> Bien</button>
+      <button class="btn" style="flex:1;min-width:90px;background:var(--amber-bg,rgba(251,191,36,.12));color:var(--amber);border-color:var(--amber)" onclick="oralMark('reg')"><i class="ti ti-minus"></i> Regular</button>
+      <button class="btn" style="flex:1;min-width:90px;background:var(--red-bg,rgba(248,113,113,.12));color:var(--red);border-color:var(--red)" onclick="oralMark('mal')"><i class="ti ti-x"></i> Mal</button>
+    </div>
+    <div style="display:flex;justify-content:space-between;margin-top:12px">
+      <button class="btn ghost sm" onclick="oralSkip()"><i class="ti ti-player-skip-forward"></i> Saltear</button>
+      <button class="btn ghost sm" onclick="oralPracticeFinish()">Terminar y ver resultados</button>
+    </div>`;
+}
+function oralSetActive(sid){ if(oralPractice){oralPractice.activeSid=sid;oralPracticeRender();} }
+function oralAdvanceStudent(){
+  const p=oralPractice; if(!p||!p.students.length)return;
+  p.sIdx=(p.sIdx+1)%p.students.length;
+  p.activeSid=p.students[p.sIdx].id;
+}
+function oralMark(kind){
+  const p=oralPractice; if(!p)return;
+  const sid=p.activeSid;
+  if(p.students.length&&sid){
+    if(!p.tally[sid])p.tally[sid]={bien:0,reg:0,mal:0};
+    p.tally[sid][kind]++;
+  }
+  p.pos++;
+  oralAdvanceStudent();
+  oralPracticeRender();
+}
+function oralSkip(){ const p=oralPractice; if(!p)return; p.pos++; oralAdvanceStudent(); oralPracticeRender(); }
+function oralPracticeFinish(){ if(oralPractice){oralPractice.pos=oralPractice.queue.length;oralPracticeRender();} }
+function oralPracticeResultsHtml(){
+  const p=oralPractice;
+  const ids=Object.keys(p.tally);
+  let table;
+  if(!ids.length){
+    table=`<div class="empty" style="padding:20px">No se marcaron respuestas</div>`;
+  }else{
+    table=`<div class="table-wrap"><table>
+      <thead><tr><th>Alumno</th><th style="text-align:center;color:var(--green)">Bien</th><th style="text-align:center;color:var(--amber)">Reg.</th><th style="text-align:center;color:var(--red)">Mal</th></tr></thead>
+      <tbody>${ids.map(sid=>{
+        const s=p.students.find(x=>x.id===sid);const t=p.tally[sid];
+        return `<tr><td style="font-weight:500">${oEsc(s?s.name:'—')}</td>
+          <td style="text-align:center">${t.bien}</td><td style="text-align:center">${t.reg}</td><td style="text-align:center">${t.mal}</td></tr>`;
+      }).join('')}</tbody></table></div>`;
+  }
+  return `<div style="text-align:center;margin-bottom:14px">
+      <div style="font-size:18px;font-weight:700">Ronda terminada</div>
+      <div style="font-size:13px;color:var(--text3)">${oEsc(p.label)} · ${p.queue.length} preguntas</div>
+    </div>
+    ${table}
+    <div style="display:flex;gap:8px;margin-top:16px">
+      <button class="btn" style="flex:1" onclick="oralPracticeRestart()"><i class="ti ti-rotate"></i> Nueva ronda</button>
+      <button class="btn primary" style="flex:1" onclick="closeOralPractice()">Cerrar</button>
+    </div>`;
+}
+function oralPracticeRestart(){
+  const p=oralPractice; if(!p)return;
+  p.queue=oralShuffle(p.queue);
+  p.pos=0; p.sIdx=0; p.tally={};
+  p.students=oralShuffle(p.students);
+  if(p.students.length)p.activeSid=p.students[0].id;
+  oralPracticeRender();
+}
+function closeOralPractice(){ closeModal('m-oral-practice'); oralPractice=null; }
+
+/* ════════ COPIAR MATERIAL A GRUPO HERMANO ════════ */
+function copyOralToSibling(gid){
+  const sib=(typeof getExamSiblingGroup==='function')?getExamSiblingGroup(gid):null;
+  if(!sib){toast('Este grupo no tiene grupo hermano','error');return;}
+  const g=getGroup(gid);
+  if(!confirm(`Esto reemplazará el material oral de ${sib.name} (novela, capítulos, preguntas de cada capítulo, preguntas generales y temas) con el de ${g.name}.\n\nLa fecha de examen de ${sib.name} no se modifica.\n\n¿Continuar?`))return;
+  const src=oralGet(gid);
+  const clone=JSON.parse(JSON.stringify({
+    novel:src.novel,
+    chapters:src.chapters,
+    generalQuestions:src.generalQuestions,
+    units:src.units
+  }));
+  const dst=oralEnsure(sib.id);
+  dst.novel=clone.novel;
+  dst.chapters=clone.chapters;
+  dst.generalQuestions=clone.generalQuestions;
+  dst.units=clone.units;
+  // dst.examDate se conserva
+  scheduleSave();renderOral();
+  toast(`Material copiado a ${sib.name} ✓`);
+}
 
 </script>
 </body>
