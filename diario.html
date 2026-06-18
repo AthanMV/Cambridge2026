@@ -12,10 +12,10 @@
 html,body{min-height:100%;font-family:'DM Sans',sans-serif;font-size:14px}
 
 :root{
-  --bg:#0a0a0f;--bg2:#111118;--bg3:#18181f;--bg4:#1e1e28;--bg5:#252533;
+  --bg:#0a0e1a;--bg2:#111726;--bg3:#182032;--bg4:#212c44;--bg5:#2a3654;
   --border:rgba(255,255,255,0.06);--border2:rgba(255,255,255,0.1);
   --text:#f0efe8;--text2:#9896a0;--text3:#5a5868;
-  --accent:#c9a84c;--accent2:#e8c96a;--accent-bg:rgba(201,168,76,0.12);--accent-border:rgba(201,168,76,0.3);
+  --accent:#3d72e3;--accent2:#5b8ef0;--accent-bg:rgba(61,114,227,0.12);--accent-border:rgba(61,114,227,0.3);--gold:#c9a84c;--gold2:#e8c96a;--gold-bg:rgba(201,168,76,0.14);--gold-border:rgba(201,168,76,0.32);
   --blue:#4a9eff;--blue-bg:rgba(74,158,255,0.1);--blue-border:rgba(74,158,255,0.25);
   --green:#52c97a;--green-bg:rgba(82,201,122,0.1);--green-border:rgba(82,201,122,0.25);
   --red:#ff6b6b;--red-bg:rgba(255,107,107,0.1);--red-border:rgba(255,107,107,0.25);
@@ -31,7 +31,7 @@ html,body{min-height:100%;font-family:'DM Sans',sans-serif;font-size:14px}
   --bg:#f0f0ec;--bg2:#fafaf7;--bg3:#f4f3ee;--bg4:#eceae4;--bg5:#e4e2db;
   --border:rgba(0,0,0,0.06);--border2:rgba(0,0,0,0.1);
   --text:#1a1818;--text2:#5a5650;--text3:#9a9690;
-  --accent:#9a6e1a;--accent2:#b8820f;--accent-bg:rgba(154,110,26,0.08);--accent-border:rgba(154,110,26,0.2);
+  --accent:#1d4ed8;--accent2:#1746b8;--accent-bg:rgba(29,78,216,0.08);--accent-border:rgba(29,78,216,0.22);--gold:#9a6e1a;--gold2:#7d5814;--gold-bg:rgba(154,110,26,0.1);--gold-border:rgba(154,110,26,0.25);
   --blue:#1a6fd4;--blue-bg:rgba(26,111,212,0.08);--blue-border:rgba(26,111,212,0.2);
   --green:#1a7a40;--green-bg:rgba(26,122,64,0.08);--green-border:rgba(26,122,64,0.2);
   --red:#c0392b;--red-bg:rgba(192,57,43,0.08);--red-border:rgba(192,57,43,0.2);
@@ -54,6 +54,7 @@ body{background:var(--bg);color:var(--text);min-height:100vh}
   color:var(--accent);letter-spacing:-0.02em;
 }
 .brand-sub{font-size:11px;color:var(--text3);letter-spacing:0.08em;text-transform:uppercase;margin-top:1px}
+.version-tag{font-size:10px;color:var(--text3);font-family:var(--font-mono);letter-spacing:0.03em;opacity:0.7}
 .topbar-controls{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
 
 /* GROUP TABS */
@@ -155,14 +156,14 @@ body{background:var(--bg);color:var(--text);min-height:100vh}
 .badge.red{background:var(--red-bg);color:var(--red);border:1px solid var(--red-border)}
 .badge.amber{background:var(--amber-bg);color:var(--amber);border:1px solid var(--amber-border)}
 .badge.blue{background:var(--blue-bg);color:var(--blue);border:1px solid var(--blue-border)}
-.badge.gold{background:var(--accent-bg);color:var(--accent);border:1px solid var(--accent-border)}
+.badge.gold{background:var(--gold-bg);color:var(--gold);border:1px solid var(--gold-border)}
 .badge.gray{background:var(--bg4);color:var(--text2);border:1px solid var(--border2)}
 .badge.purple{background:var(--purple-bg);color:var(--purple)}
 
 /* BTNS */
 .btn{display:inline-flex;align-items:center;gap:5px;padding:7px 16px;border-radius:var(--radius);border:1px solid var(--border2);background:var(--bg3);color:var(--text);cursor:pointer;font-size:13px;font-family:'DM Sans',sans-serif;font-weight:500;transition:all 0.15s}
 .btn:hover{background:var(--bg4)}
-.btn.primary{background:var(--accent);color:#111;border-color:var(--accent);font-weight:600}
+.btn.primary{background:var(--accent);color:#fff;border-color:var(--accent);font-weight:600}
 .btn.primary:hover{background:var(--accent2)}
 .btn.sm{padding:5px 12px;font-size:12px;border-radius:8px}
 .btn.xs{padding:3px 8px;font-size:11px;border-radius:6px}
@@ -226,6 +227,57 @@ body{background:var(--bg);color:var(--text);min-height:100vh}
 /* NO SELECT for screen display */
 .no-select{user-select:none;-webkit-user-select:none}
 
+/* PROGRESS BAR */
+.progress-bar-wrap{flex:1;min-width:120px;display:flex;flex-direction:column;gap:4px}
+.progress-bar-track{height:6px;background:var(--bg4);border-radius:3px;overflow:hidden}
+.progress-bar-fill{height:100%;border-radius:3px;background:linear-gradient(90deg,var(--green),var(--accent));transition:width 0.5s ease}
+.progress-pct{font-size:11px;color:var(--text3);font-weight:600}
+
+/* NEXT CLASS HIGHLIGHT */
+.class-card.next-class{border-color:var(--blue-border);box-shadow:0 0 0 2px rgba(74,158,255,0.12),var(--shadow)}
+
+/* COLLAPSED CARD */
+.class-card.collapsed .card-body{display:none}
+.class-card.collapsed .card-notes-footer{display:none}
+.collapse-btn{background:none;border:none;cursor:pointer;color:var(--text3);padding:4px 6px;border-radius:6px;transition:all 0.15s;display:flex;align-items:center}
+.collapse-btn:hover{background:var(--bg4);color:var(--text)}
+
+/* PREV HOMEWORK HINT */
+.prev-hw-box{background:var(--blue-bg);border:1px solid var(--blue-border);border-radius:var(--radius);padding:10px 14px;margin-bottom:12px;font-size:12px;color:var(--blue)}
+.prev-hw-box strong{display:block;font-size:10px;text-transform:uppercase;letter-spacing:0.08em;margin-bottom:3px;opacity:0.7}
+
+/* SYNC TIMESTAMP */
+.sync-ts{font-size:10px;color:var(--text3);opacity:0.6}
+
+/* PROJECTION MODE */
+body.projection-mode{font-size:18px}
+body.projection-mode .topbar{padding:10px 20px}
+body.projection-mode .brand-logo{font-size:22px}
+body.projection-mode .group-tab{font-size:16px;padding:10px 22px}
+body.projection-mode .card-num-val{font-size:34px}
+body.projection-mode .card-date{font-size:18px}
+body.projection-mode .section-content{font-size:17px;line-height:1.7}
+body.projection-mode .section-label{font-size:11px}
+body.projection-mode .badge{font-size:13px;padding:5px 12px}
+body.projection-mode .card-body{gap:24px;padding:24px}
+body.projection-mode .stats-bar{display:none}
+body.projection-mode .topbar-controls .month-nav{display:none}
+body.projection-mode .topbar-controls .btn:not(#btn-projection){display:none}
+body.projection-mode .card-actions{display:none}
+body.projection-mode .class-card.future{display:none}
+body.projection-mode .week-num{font-size:13px}
+.projection-badge{display:none}
+body.projection-mode .projection-badge{display:inline-flex}
+body.projection-mode .absent-chip{font-size:14px;padding:5px 12px}
+body.projection-mode .card-num{padding:20px 24px;min-width:88px}
+
+/* ABSENT TOGGLE ANIMATION */
+@keyframes absentFlash{0%{transform:scale(1)}30%{transform:scale(1.04)}100%{transform:scale(1)}}
+.abs-toggle.flash{animation:absentFlash 0.2s ease}
+
+/* TODAY SCROLL ANCHOR */
+.today-anchor{scroll-margin-top:130px}
+
 @media(max-width:700px){
   .card-body{grid-template-columns:1fr}
   .topbar{padding:12px 16px}
@@ -243,7 +295,7 @@ body{background:var(--bg);color:var(--text);min-height:100vh}
   <div class="topbar-brand">
     <div>
       <div class="brand-logo">Cambridge</div>
-      <div class="brand-sub">Diario de Clases 2026</div>
+      <div class="brand-sub">Diario de Clases 2026 <span class="version-tag" title="Versión del software">v2.15.0</span></div>
     </div>
   </div>
   <div class="topbar-controls">
@@ -255,8 +307,14 @@ body{background:var(--bg);color:var(--text);min-height:100vh}
     <button class="btn sm" onclick="goToday()" id="btn-today"><i class="ti ti-calendar-event"></i> Hoy</button>
     <div style="display:flex;align-items:center;gap:6px;margin-left:4px">
       <span class="sync-dot" id="sync-dot"></span>
-      <span id="sync-label" style="font-size:11px;color:var(--text3)">Cargando</span>
+      <div style="display:flex;flex-direction:column;gap:1px">
+        <span id="sync-label" style="font-size:11px;color:var(--text3)">Cargando</span>
+        <span id="sync-ts" class="sync-ts"></span>
+      </div>
     </div>
+    <button class="btn sm" id="btn-projection" onclick="toggleProjection()" title="Modo proyección">
+      <i class="ti ti-presentation" id="proj-icon"></i>
+    </button>
     <button class="btn sm ghost" onclick="toggleTheme()" title="Cambiar tema · Mantené presionado para auto" oncontextmenu="clearThemePref();return false">
       <i class="ti ti-moon" id="theme-btn-icon"></i>
     </button>
@@ -301,6 +359,12 @@ body{background:var(--bg);color:var(--text);min-height:100vh}
     </div>
 
     <div id="me-fields">
+      <!-- Prev homework hint -->
+      <div id="me-prev-hw" class="prev-hw-box" style="display:none">
+        <strong><i class="ti ti-history"></i> Tarea de la clase anterior</strong>
+        <span id="me-prev-hw-text"></span>
+      </div>
+
       <!-- Absent students -->
       <div style="margin-bottom:16px" id="me-absent-section">
         <div class="field" style="margin-bottom:0">
@@ -361,11 +425,13 @@ const DAYS_ES=['domingo','lunes','martes','miércoles','jueves','viernes','sába
 const DAY_S=['Dom','Lun','Mar','Mié','Jue','Vie','Sáb'];
 
 // ── STATE ────────────────────────────────────────────────
-let db={groups:[],students:[],payments:[],families:[],teachers:[],teacherPayments:[],attendance:{},dayNotes:{},settings:{},grades:{},cambridge2025:[],classTypes:[],classLogs:{},schools:[],journal:{}};
+let db={groups:[],students:[],payments:[],families:[],teachers:[],teacherPayments:[],attendance:{},dayNotes:{},settings:{},grades:{},cambridge2025:[],classTypes:[],classLogs:{},schools:[],journal:{},oral:{}};
 let selGid='';
+const VERSION='2.15.0';
 let selMonth=curMonth();
 let lastHash='';
 let saveTimer=null;
+let saveRetryCount=0;
 let dbLoaded=false; // Only allow saves after full load
 let pollTimer=null;
 
@@ -378,7 +444,7 @@ function dbHash(d){
     const attK=Object.values(d.attendance||{}).reduce((a,m)=>a+Object.keys(m).length,0);
     const jrnK=Object.values(d.journal||{}).reduce((a,g)=>a+Object.keys(g).length,0);
     const dayN=Object.values(d.dayNotes||{}).reduce((a,m)=>a+Object.keys(m).length,0);
-    return (d.students||[]).length+'-'+attK+'-'+dayN+'-'+jrnK;
+    return (d.students||[]).length+'-'+attK+'-'+dayN+'-'+jrnK+'-'+(d.oral?JSON.stringify(d.oral).length:0);
   }catch(e){return '';}
 }
 
@@ -404,6 +470,16 @@ function getClassDates(g){
 
 function getJournalEntry(gid,dateStr){
   return (db.journal[gid]||{})[dateStr]||{notes:'',material:'',homework:'',holiday:false};
+}
+
+// Info del Oral para un grupo en una fecha (capítulo programado / examen)
+function oralForDate(gid,dateStr){
+  const o=(db.oral||{})[gid];
+  if(!o)return null;
+  const out={chapter:null,exam:false};
+  if(Array.isArray(o.chapters))out.chapter=o.chapters.find(c=>c.date===dateStr)||null;
+  if(o.examDate&&o.examDate===dateStr)out.exam=true;
+  return (out.chapter||out.exam)?out:null;
 }
 
 function isHoliday(gid,dateStr){
@@ -442,6 +518,35 @@ function setSyncStatus(state,label){
   const dot=document.getElementById('sync-dot');const lbl=document.getElementById('sync-label');
   if(dot)dot.className='sync-dot '+(state==='offline'?'error':state);
   if(lbl)lbl.textContent=label;
+  if(state==='ok'){
+    const ts=document.getElementById('sync-ts');
+    if(ts){const t=new Date();ts.textContent=`${String(t.getHours()).padStart(2,'0')}:${String(t.getMinutes()).padStart(2,'0')}`;}
+  }
+}
+
+// ── PROJECTION MODE ───────────────────────────────────────
+let projectionMode=false;
+function toggleProjection(){
+  projectionMode=!projectionMode;
+  document.body.classList.toggle('projection-mode',projectionMode);
+  const icon=document.getElementById('proj-icon');
+  if(icon)icon.className=projectionMode?'ti ti-presentation-off':'ti ti-presentation';
+  if(projectionMode){
+    // Collapse past cards automatically for clean display
+    document.querySelectorAll('.class-card:not(.today):not(.next-class)').forEach(c=>{
+      if(!c.classList.contains('future'))c.classList.add('collapsed');
+    });
+    toast('Modo proyección activado — clases pasadas colapsadas','info');
+  } else {
+    document.querySelectorAll('.class-card.collapsed').forEach(c=>c.classList.remove('collapsed'));
+    toast('Modo proyección desactivado');
+  }
+}
+
+// ── COLLAPSE CARD ─────────────────────────────────────────
+function toggleCollapse(el,e){
+  e.stopPropagation();
+  el.closest('.class-card').classList.toggle('collapsed');
 }
 
 // ── THEME ─────────────────────────────────────────────────
@@ -478,7 +583,8 @@ async function loadData(){
   setSyncStatus('saving','Cargando...');
   try{
     const r=await fetch(`${SUPA_URL}/rest/v1/institute_data?id=eq.main&select=data`,{
-      headers:{'apikey':SUPA_KEY,'Authorization':'Bearer '+SUPA_KEY}
+      headers:{'apikey':SUPA_KEY,'Authorization':'Bearer '+SUPA_KEY},
+      signal:AbortSignal.timeout(10000)
     });
     if(!r.ok)throw new Error('HTTP '+r.status);
     const rows=await r.json();
@@ -496,7 +602,7 @@ async function loadData(){
       if(d.classLogs)db.classLogs=d.classLogs;
       if(d.schools)db.schools=d.schools;
       if(d.journal)db.journal=d.journal;
-        if(d.cambridge2025)db.cambridge2025=d.cambridge2025;
+      if(d.oral)db.oral=d.oral;
       db.groups.forEach(g=>{const sc=GROUP_SCHEDULE[g.name];if(sc){if(!g.days?.length)g.days=sc.days;if(!g.time)g.time=sc.time;}});
     }
     setSyncStatus('ok','Sincronizado');
@@ -513,50 +619,20 @@ function dbDataCount(data){
     Object.values(data.journal||{}).reduce((a,g)=>a+Object.keys(g).length,0) +
     Object.values(data.grades||{}).reduce((a,g)=>a+Object.keys(g).length,0);
 }
-
-// ── MERGE HELPERS (mirror of index.html, keep in sync) ──
-// Deep merge plain objects 2 levels down (e.g. journal[gid][date], dayNotes[mk][key])
-function mergeDeepObj(remote, local){
-  const merged={...(remote||{})};
-  for(const k of Object.keys(local||{})){
-    if(typeof local[k]==='object'&&!Array.isArray(local[k])&&remote&&remote[k]){
-      merged[k]={...remote[k],...local[k]};
-    } else {
-      merged[k]=local[k];
-    }
-  }
-  return merged;
-}
-
-// Merge attendance to DAY level (4 deep: gid > mk > sid > day).
-// Keeps marks from BOTH sides; only a same group+month+student+day
-// collision resolves in favour of local. Never drops another session's marks.
-function mergeAttendance(remote, local){
-  remote=remote||{}; local=local||{};
-  const merged={};
-  const gids=new Set([...Object.keys(remote),...Object.keys(local)]);
-  for(const gid of gids){
-    merged[gid]={};
-    const mks=new Set([...Object.keys(remote[gid]||{}),...Object.keys(local[gid]||{})]);
-    for(const mk of mks){
-      merged[gid][mk]={};
-      const sids=new Set([...Object.keys((remote[gid]||{})[mk]||{}),...Object.keys((local[gid]||{})[mk]||{})]);
-      for(const sid of sids){
-        merged[gid][mk][sid]={
-          ...(((remote[gid]||{})[mk]||{})[sid]||{}),
-          ...(((local[gid] ||{})[mk]||{})[sid]||{})
-        };
-      }
-    }
-  }
-  return merged;
-}
-
 // ── SAFE MERGE SAVE ─────────────────────────────────────
 // Diario only modifies journal, attendance, dayNotes.
-// We fetch current Supabase state, DEEP-MERGE those 3 fields,
-// then write back. This prevents overwriting grades, payments,
-// AND prevents pisar asistencias/diario marcados desde otra sesión.
+// We fetch current Supabase state, update only those 3 fields,
+// then write back. This prevents overwriting grades, payments, etc.
+//
+// SAFETY: before writing we compare the entry counts of the 3 fields
+// we manage against what's currently in Supabase. If our local copy
+// has dropped below 70% of remote for any field that had real data,
+// we ABORT the save (likely accidental data loss) instead of writing.
+function countEntries(obj){
+  if(!obj||typeof obj!=='object')return 0;
+  return Object.values(obj).reduce((a,sub)=>a+(sub&&typeof sub==='object'?Object.keys(sub).length:0),0);
+}
+
 async function saveData(){
   if(!dbLoaded){
     // Not loaded yet - retry in 2s
@@ -569,7 +645,8 @@ async function saveData(){
   try{
     // Step 1: Get current Supabase state
     const res=await fetch(`${SUPA_URL}/rest/v1/institute_data?id=eq.main&select=data`,{
-      headers:{'apikey':SUPA_KEY,'Authorization':'Bearer '+SUPA_KEY}
+      headers:{'apikey':SUPA_KEY,'Authorization':'Bearer '+SUPA_KEY},
+      signal:AbortSignal.timeout(10000)
     });
     if(!res.ok) throw new Error('Fetch '+res.status);
     const rows=await res.json();
@@ -577,35 +654,58 @@ async function saveData(){
 
     const current=rows[0].data;
 
-    // Step 2: DEEP-MERGE the 3 fields diario manages with the freshly
-    // fetched remote, so concurrent marks from index/profesora survive.
-    current.journal    = mergeDeepObj(current.journal||{},      db.journal||{});
-    current.attendance = mergeAttendance(current.attendance||{}, db.attendance||{});
-    current.dayNotes   = mergeDeepObj(current.dayNotes||{},      db.dayNotes||{});
+    // Step 2: SAFETY CHECK — don't overwrite remote data with a near-empty local copy
+    const fields=['journal','attendance','dayNotes'];
+    for(const f of fields){
+      const remoteCount=countEntries(current[f]);
+      const localCount=countEntries(db[f]);
+      // Only guard when remote had meaningful data (>3 entries) and local dropped below 70%
+      if(remoteCount>3 && localCount < remoteCount*0.7){
+        setSyncStatus('error','Guardado bloqueado');
+        // Do NOT auto-retry a dangerous save
+        clearTimeout(saveTimer);saveTimer=null;
+        const msg=`⚠️ Guardado BLOQUEADO para proteger tus datos.\n\n`+
+          `El campo "${f}" tiene ${localCount} entradas localmente pero ${remoteCount} en Supabase.\n\n`+
+          `Esto suele indicar pérdida accidental de datos. NO se guardó nada.\n\n`+
+          `Recargá la página para traer la versión de Supabase. Si estás seguro de que tu versión local es correcta, avisá antes de forzar.`;
+        alert(msg);
+        toast('Guardado bloqueado — posible pérdida de datos','error');
+        return;
+      }
+    }
 
-    // Step 3: Write merged object back
+    // Step 3: Only update the 3 fields diario manages
+    current.journal    = db.journal;
+    current.attendance = db.attendance;
+    current.dayNotes   = db.dayNotes;
+
+    // Step 4: Write merged object back
     const patch=await fetch(`${SUPA_URL}/rest/v1/institute_data?id=eq.main`,{
       method:'PATCH',
       headers:{'apikey':SUPA_KEY,'Authorization':'Bearer '+SUPA_KEY,'Content-Type':'application/json','Prefer':'return=minimal'},
-      body:JSON.stringify({data:current,updated_at:new Date().toISOString()})
+      body:JSON.stringify({data:current,updated_at:new Date().toISOString()}),
+      signal:AbortSignal.timeout(10000)
     });
     if(!patch.ok) throw new Error('Patch '+patch.status);
 
-    // Step 4: Sync local db with what we just saved
+    // Step 5: Sync local db with what we just saved
     Object.assign(db,current);
     lastHash=dbHash(db);
+    saveRetryCount=0;
+    clearTimeout(saveTimer);saveTimer=null; // IMPORTANT: re-enable polling & clear beforeunload
 
-    // Step 5: Local backup
+    // Step 6: Local backup
     try{localStorage.setItem('diario_bk',JSON.stringify({ts:new Date().toISOString(),data:current}));}catch(e){}
 
     setSyncStatus('ok','Guardado ✓');
     setTimeout(()=>setSyncStatus('ok','Sincronizado'),2000);
   }catch(e){
     setSyncStatus('error','Error al guardar');
-    // Retry once in 5s
+    saveRetryCount++;
+    const delay=Math.min(5000*Math.pow(2,saveRetryCount-1),60000); // 5s, 10s, 20s, 40s, max 60s
     clearTimeout(saveTimer);
-    saveTimer=setTimeout(()=>saveData(),5000);
-    toast('Reintentando guardar...','error');
+    saveTimer=setTimeout(()=>saveData(),delay);
+    toast(`Reintentando en ${Math.round(delay/1000)}s...`,'error');
   }
 }
 
@@ -621,7 +721,7 @@ function startPolling(){
   if(pollTimer)clearInterval(pollTimer);
   pollTimer=setInterval(async()=>{
     try{
-      const r=await fetch(`${SUPA_URL}/rest/v1/institute_data?id=eq.main&select=data`,{headers:{'apikey':SUPA_KEY,'Authorization':'Bearer '+SUPA_KEY}});
+      const r=await fetch(`${SUPA_URL}/rest/v1/institute_data?id=eq.main&select=data`,{headers:{'apikey':SUPA_KEY,'Authorization':'Bearer '+SUPA_KEY},signal:AbortSignal.timeout(10000)});
       const rows=await r.json();if(!rows?.[0])return;
       const h=dbHash(rows[0].data);
       if(h!==lastHash&&!saveTimer){
@@ -631,6 +731,7 @@ function startPolling(){
         if(d.settings)db.settings=d.settings;if(d.grades)db.grades=d.grades;
         if(d.classTypes)db.classTypes=d.classTypes;if(d.classLogs)db.classLogs=d.classLogs;
         if(d.schools)db.schools=d.schools;if(d.journal)db.journal=d.journal;
+        if(d.oral)db.oral=d.oral;
         db.groups.forEach(g=>{const sc=GROUP_SCHEDULE[g.name];if(sc){if(!g.days?.length)g.days=sc.days;if(!g.time)g.time=sc.time;}});
         setSyncStatus('ok','Actualizado');
         renderMain();
@@ -703,6 +804,11 @@ function renderMain(){
   const pastDates=monthDates.filter(d=>d<=todayStr);
   const loaded=pastDates.filter(d=>{const e=getJournalEntry(selGid,d);return(e.notes||e.material||e.homework)&&!isHoliday(selGid,d)&&!e.holiday;}).length;
   const holidays=monthDates.filter(d=>isHoliday(selGid,d)||getJournalEntry(selGid,d).holiday).length;
+  const pending=pastDates.length-loaded-holidays;
+  const pct=pastDates.length>0?Math.round(loaded/Math.max(pastDates.length-holidays,1)*100):0;
+
+  // Find next class date
+  const nextClassDate=monthDates.find(d=>d>=todayStr&&!getJournalEntry(selGid,d).holiday&&!isHoliday(selGid,d))||null;
 
   // Group by cycle week
   const byWeek={};
@@ -731,10 +837,18 @@ function renderMain(){
     <div class="stat-div"></div>
     <div class="stat-item"><div class="stat-num" style="color:var(--green)">${loaded}</div><div class="stat-lbl">Cargadas</div></div>
     <div class="stat-div"></div>
-    <div class="stat-item"><div class="stat-num" style="color:var(--red)">${pastDates.length-loaded-holidays}</div><div class="stat-lbl">Pendientes</div></div>
+    <div class="stat-item"><div class="stat-num" style="color:var(--red)">${pending}</div><div class="stat-lbl">Pendientes</div></div>
     <div class="stat-div"></div>
     <div class="stat-item"><div class="stat-num" style="color:var(--text3)">${monthDates.filter(d=>d>todayStr).length}</div><div class="stat-lbl">Futuras</div></div>
-    <div style="margin-left:auto;font-size:12px;color:var(--text3)">${g.name} · ${g.time} · ${(g.days||[]).map(d=>DAY_S[d]).join('+')}</div>
+    <div class="stat-div"></div>
+    <div class="progress-bar-wrap">
+      <div style="display:flex;justify-content:space-between;align-items:center">
+        <span class="stat-lbl">Carga del mes</span>
+        <span class="progress-pct">${pct}%</span>
+      </div>
+      <div class="progress-bar-track"><div class="progress-bar-fill" style="width:${pct}%"></div></div>
+    </div>
+    <div style="margin-left:auto;font-size:12px;color:var(--text3);text-align:right">${g.name}<br>${g.time} · ${(g.days||[]).map(d=>DAY_S[d]).join('+')}</div>
   </div>`;
 
   // Weeks
@@ -757,20 +871,27 @@ function renderMain(){
       const hasData=entry.notes||entry.material||entry.homework;
       const dayLabel=d.toLocaleDateString('es-AR',{weekday:'long',day:'numeric',month:'long'});
 
+      const isNextClass=dateStr===nextClassDate&&!isToday;
+      const daysUntil=isNextClass?Math.round((new Date(dateStr+'T12:00:00')-new Date(todayStr+'T12:00:00'))/(86400000)):0;
+
       let cardClass='class-card';
       if(isToday)cardClass+=' today';
-      if(isFuture&&!hasData)cardClass+=' future';
+      if(isNextClass)cardClass+=' next-class';
+      if(isFuture&&!hasData&&!isNextClass)cardClass+=' future';
       if(holiday)cardClass+=' holiday';
 
       // Status badge
       let statusBadge='';
       if(holiday) statusBadge='<span class="badge amber">🚫 Cancelada</span>';
       else if(isToday) statusBadge='<span class="badge gold">✦ Hoy</span>';
-      else if(isFuture&&!hasData) statusBadge='<span class="badge gray">Próxima</span>';
+      else if(isNextClass) statusBadge=`<span class="badge blue">→ Próxima ${daysUntil===1?'(mañana)':daysUntil>1?`(en ${daysUntil} días)`:''}</span>`;
+      else if(isFuture&&!hasData) statusBadge='<span class="badge gray">Futura</span>';
       else if(hasData) statusBadge='<span class="badge green">✓ Cargada</span>';
       else statusBadge='<span class="badge red">Sin cargar</span>';
 
-      html+=`<div class="${cardClass}">`;
+      const todayAnchor=isToday||isNextClass?'today-anchor':'';
+      const cardId=isToday?'today-card':isNextClass?'next-card':'';
+      html+=`<div class="${cardClass} ${todayAnchor}" id="${cardId}">`;
 
       // Card head
       html+=`<div class="card-head">
@@ -780,13 +901,18 @@ function renderMain(){
           <div class="card-num-week">Sem. ${week}</div>
         </div>
         <div class="card-meta">
-          <div class="card-date">${dayLabel}${isToday?'':''}</div>
+          <div class="card-date">${dayLabel}</div>
           <div class="card-status">
             ${statusBadge}
+            <span class="badge purple projection-badge"><i class="ti ti-presentation" style="font-size:11px"></i> En pantalla</span>
             ${absents.length&&!holiday?`<span class="badge red">${absents.length} ausente${absents.length!==1?'s':''}</span>`:''}
+            ${(()=>{const od=oralForDate(selGid,dateStr);if(!od)return '';let b='';if(od.chapter)b+=`<span class="badge blue" title="Capítulo programado">📖 Cap. ${od.chapter.n||''}${od.chapter.title?': '+od.chapter.title:''}</span>`;if(od.exam)b+=`<span class="badge gold" title="Examen oral">🎤 Examen oral</span>`;return b;})()}
           </div>
         </div>
         <div class="card-actions">
+          <button class="collapse-btn" onclick="toggleCollapse(this,event)" title="Expandir/colapsar">
+            <i class="ti ti-chevron-up"></i>
+          </button>
           <button class="btn sm" onclick="openEntry('${selGid}','${dateStr}',${cn},'${week}')">
             <i class="ti ti-${hasData||holiday?'edit':'plus'}"></i> ${hasData||holiday?'Editar':'Cargar'}
           </button>
@@ -795,9 +921,10 @@ function renderMain(){
 
       // Card body
       if(holiday){
-        html+=`<div class="card-body holiday-body"><div style="color:var(--amber);font-size:13px">Clase cancelada / Feriado</div></div>`;
+        html+=`<div class="card-body holiday-body"><div style="color:var(--amber);font-size:13px">🚫 Clase cancelada / Feriado</div></div>`;
       } else {
-        html+=`<div class="card-body">`;
+        const colCount=entry.notes?4:3;
+        html+=`<div class="card-body" style="grid-template-columns:repeat(${colCount},1fr)">`;
 
         // Absent students
         html+=`<div>
@@ -823,15 +950,15 @@ function renderMain(){
           <div class="section-content ${entry.homework?'':'empty'}">${entry.homework||'Sin tarea'}</div>
         </div>`;
 
-        html+=`</div>`;
-
-        // Notes if present
+        // Notes (4th column if present)
         if(entry.notes){
-          html+=`<div style="padding:0 20px 16px;border-top:1px solid var(--border)">
-            <div class="section-label" style="margin-top:12px"><i class="ti ti-notes"></i> Anotaciones</div>
+          html+=`<div>
+            <div class="section-label"><i class="ti ti-notes"></i> Anotaciones</div>
             <div class="section-content">${entry.notes}</div>
           </div>`;
         }
+
+        html+=`</div>`;
       }
 
       html+=`</div>`;
@@ -841,6 +968,12 @@ function renderMain(){
   });
 
   document.getElementById('main-content').innerHTML=html;
+
+  // Scroll to today or next class
+  requestAnimationFrame(()=>{
+    const anchor=document.getElementById('today-card')||document.getElementById('next-card');
+    if(anchor&&selMonth===curMonth())anchor.scrollIntoView({behavior:'smooth',block:'start'});
+  });
 }
 
 // ── MODAL ─────────────────────────────────────────────────
@@ -882,6 +1015,24 @@ function openEntry(gid,dateStr,classNum,week){
   document.getElementById('me-material').value=entry.material||'';
   document.getElementById('me-homework').value=entry.homework||'';
 
+  // Show previous class homework as hint
+  const allDates=getClassDates(getGroup(gid));
+  const thisIdx=allDates.indexOf(dateStr);
+  const prevDate=thisIdx>0?allDates[thisIdx-1]:null;
+  const prevHwBox=document.getElementById('me-prev-hw');
+  const prevHwText=document.getElementById('me-prev-hw-text');
+  if(prevDate&&!holiday){
+    const prevEntry=getJournalEntry(gid,prevDate);
+    if(prevEntry.homework){
+      prevHwBox.style.display='';
+      prevHwText.textContent=prevEntry.homework;
+    } else {
+      prevHwBox.style.display='none';
+    }
+  } else {
+    prevHwBox.style.display='none';
+  }
+
   // Show copy button if this group has a sibling
   const sibling=getSiblingGroup(gid);
   const copyBtn=document.getElementById('me-copy-btn');
@@ -908,7 +1059,7 @@ function openEntry(gid,dateStr,classNum,week){
       </div>`;
     }).join('');
   } else {
-    absentList.innerHTML='<span style="font-size:12px;color:var(--text3)">Sin alumnos en este grupo</span>';
+    absentList.innerHTML='<div style="font-size:13px;color:var(--text3);padding:12px;text-align:center"><i class="ti ti-users-minus" style="display:block;font-size:24px;margin-bottom:6px;opacity:0.3"></i>Sin alumnos en este grupo</div>';
   }
 
   document.getElementById('m-entry').classList.add('open');
@@ -968,6 +1119,9 @@ function toggleAbsent(gid,mk,sid,day){
     el.className='abs-toggle'+(isNowAbs?' absent':'');
     el.querySelector('span:last-child').textContent=isNowAbs?'Ausente':'Presente';
     el.querySelector('span:last-child').style.color=isNowAbs?'var(--red)':'var(--text3)';
+    // Flash animation
+    el.classList.add('flash');
+    setTimeout(()=>el.classList.remove('flash'),200);
   }
   scheduleSave();
 }
