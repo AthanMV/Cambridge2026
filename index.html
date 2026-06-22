@@ -448,7 +448,7 @@ tr:hover td{background:var(--bg3)}
       <i class="ti ti-sun theme-icon-sun"></i>
       <i class="ti ti-moon theme-icon-moon"></i>
     </button>
-    <span class="version-tag" title="Versión del software">v2.19.0</span>
+    <span class="version-tag" title="Versión del software">v2.20.0</span>
   </div>
 </div>
 
@@ -958,7 +958,7 @@ tr:hover td{background:var(--bg3)}
 <script>
 
 
-const VERSION='2.19.0';
+const VERSION='2.20.0';
 const SUPA_URL='https://hnusoslzobzuplhdephe.supabase.co';
 const SUPA_KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImhudXNvc2x6b2J6dXBsaGRlcGhlIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzg3MzEwNjQsImV4cCI6MjA5NDMwNzA2NH0.HTSM4lp4Dpl_voNAPYlWcNqvUQaaXDH1OTgjkUrWAI8';
 const MONTHS=['ENERO','FEBRERO','MARZO','ABRIL','MAYO','JUNIO','JULIO','AGOSTO','SEPTIEMBRE','OCTUBRE','NOVIEMBRE','DICIEMBRE'];
@@ -2809,7 +2809,7 @@ function getWeeklyAbsences(){
       const dayN=date.getDate(),mo=date.getMonth()+1,yr=date.getFullYear();
       const monthKey=`${yr}-${String(mo).padStart(2,'0')}`;
       const noteKey=`${g.id}-${monthKey}-${dayN}`;
-      if((db.dayNotes[monthKey]||{})[noteKey])continue;
+      if(diaOff(g.id,monthKey,dayN))continue;
       students.forEach(s=>{
         const rec=(db.attendance[g.id]||{})[monthKey]?.[s.id]||{};
         if(rec[dayN]==='A')results.push({student:s,group:g,day:dayN,month:mo,year:yr});
@@ -3373,6 +3373,7 @@ function openStudentReport(id){
     const dictadas = reportClassDates(g).filter(d=>{
       const mk=d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0');
       const noteKey=g.id+'-'+mk+'-'+d.getDate();
+      if(recesoNombre(mk+'-'+String(d.getDate()).padStart(2,'0')))return false;
       return (db.dayNotes[mk]||{})[noteKey]!=='Cancelada';
     }).length;
     const faltas = Object.entries(db.attendance[s.groupId]||{}).reduce((total,[mk,students])=>{
@@ -4070,7 +4071,7 @@ function renderWeekView(){
   sortedDays.forEach(([,{groups}])=>{
     groups.forEach(({g,dayNum,monthKey})=>{
       const noteKey=`${g.id}-${monthKey}-${dayNum}`;
-      if((db.dayNotes[monthKey]||{})[noteKey])return;
+      if(diaOff(g.id,monthKey,dayNum))return;
       const students=db.students.filter(s=>s.groupId===g.id);
       students.forEach(s=>{
         const rec=(db.attendance[g.id]||{})[monthKey]?.[s.id]||{};
@@ -4095,7 +4096,7 @@ function renderWeekView(){
       const dayHtml=groups.map(({g,dayNum,monthKey})=>{
         const students=db.students.filter(s=>s.groupId===g.id);
         const noteKey=`${g.id}-${monthKey}-${dayNum}`;
-        const holiday=(db.dayNotes[monthKey]||{})[noteKey];
+        const holiday=diaOff(g.id,monthKey,dayNum);
 
         const absent=students.filter(s=>{
           if(holiday)return false;
@@ -4184,7 +4185,7 @@ function renderTrimesterAtt(gid,tri){
       const notes=db.dayNotes[mkey]||{};
       cdays.forEach(d=>{
         const key=`${gid}-${mkey}-${d}`;
-        if(notes[key])return;
+        if(diaOff(gid,mkey,d))return;
         totalClasses++;
         if(rec[d]==='A')absences++;
       });
@@ -4217,7 +4218,7 @@ function renderTrimesterAtt(gid,tri){
             const dow=new Date(yy,mm-1,d).getDay();
             if(!(g.days||[]).includes(dow))continue;
             const key=`${gid}-${mkey}-${d}`;
-            if((db.dayNotes[mkey]||{})[key])continue;
+            if(diaOff(gid,mkey,d))continue;
             t++;
             if((db.attendance[gid]?.[mkey]?.[s.id]||{})[d]==='A')a++;
           }
@@ -4267,7 +4268,7 @@ function renderAttBody(gid,month){
       for(let d=1;d<=dd;d++){const dow=new Date(yy,mm-1,d).getDay();if((g.days||[]).includes(dow))cdays.push(d);}
       const rec=(db.attendance[gid]||{})[mkey]||{};
       const notes=(db.dayNotes[mkey]||{});
-      cdays.forEach(d=>{const key=`${gid}-${mkey}-${d}`;if(notes[key])return;totalClass++;if((rec[sid]||{})[d]==='A')total++;});
+      cdays.forEach(d=>{const key=`${gid}-${mkey}-${d}`;if(diaOff(gid,mkey,d))return;totalClass++;if((rec[sid]||{})[d]==='A')total++;});
     });
     return{absences:total,total:totalClass};
   }
@@ -4280,7 +4281,7 @@ function renderAttBody(gid,month){
     <div style="margin-bottom:14px">
       <div style="font-size:11px;text-transform:uppercase;letter-spacing:0.08em;color:var(--text3);margin-bottom:8px">Días de clase — tocá para marcar feriado/cancelado</div>
       <div style="display:flex;flex-wrap:wrap;gap:6px">
-        ${classDays.map(d=>{const dow=new Date(y,m-1,d).getDay();const key=`${gid}-${month}-${d}`;const note=(db.dayNotes[month]||{})[key]||'';
+        ${classDays.map(d=>{const dow=new Date(y,m-1,d).getDay();const key=`${gid}-${month}-${d}`;const note=diaOff(gid,month,d);
           return`<div onclick="openDayNote('${gid}','${month}',${d})" style="cursor:pointer;text-align:center;padding:4px 8px;border-radius:7px;border:1px solid ${note?'rgba(245,166,35,0.3)':'var(--border)'};background:${note?'var(--amber-bg)':'var(--bg3)'};min-width:44px">
             <div style="font-size:10px;color:${note?'var(--amber)':'var(--text3)'};">${DAY_SHORT[dow]}</div>
             <div style="font-size:13px;font-weight:600;color:${note?'var(--amber)':'var(--text)'}">${d}${note?'★':''}</div>
@@ -4296,7 +4297,7 @@ function renderAttBody(gid,month){
   students.forEach(s=>{
     const rec=db.attendance[gid][month][s.id]||{};
     const notes=db.dayNotes[month]||{};
-    const activeDays=classDays.filter(d=>!notes[`${gid}-${month}-${d}`]);
+    const activeDays=classDays.filter(d=>!diaOff(gid,month,d));
     const absentC=activeDays.filter(d=>rec[d]==='A').length;
     const presentC=activeDays.length-absentC;
     const t=triAbsences(s.id);
@@ -4310,9 +4311,12 @@ function renderAttBody(gid,month){
       <div class="att-row">
         ${classDays.map(d=>{
           const key=`${gid}-${month}-${d}`;const dow=new Date(y,m-1,d).getDay();
-          const isHoliday=!!(notes[key]);const isAbsent=!isHoliday&&rec[d]==='A';
+          const dn=notes[key];const off=diaOff(gid,month,d);
+          const isHoliday=!!off;const isAbsent=!isHoliday&&rec[d]==='A';
           const cls=isHoliday?'holiday':isAbsent?'absent':'';
-          return`<div class="att-day ${cls}" onclick="${isHoliday?`openDayNote('${gid}','${month}',${d})`:`toggleAtt('${gid}','${month}','${s.id}',${d})`}" title="${DAY_SHORT[dow]} ${d}${isHoliday?' — '+notes[key]:''}">${d}<span class="day-label">${isHoliday?'FER':isAbsent?'A':''}</span></div>`;
+          const offLab=dn?'FER':(off?'REC':'');
+          const click=dn?`openDayNote('${gid}','${month}',${d})`:(off?'':`toggleAtt('${gid}','${month}','${s.id}',${d})`);
+          return`<div class="att-day ${cls}" onclick="${click}" title="${DAY_SHORT[dow]} ${d}${isHoliday?' — '+off:''}">${d}<span class="day-label">${isHoliday?offLab:isAbsent?'A':''}</span></div>`;
         }).join('')}
       </div>
     </div>`;
@@ -5183,6 +5187,17 @@ function renderSettingsBase(){
   const snap=backupSnap();
   const snapInfo=snap?`${new Date(snap.ts).toLocaleString('es-AR')} · ${(snap.data?.students||[]).length} alumnos · ${(snap.data?.payments||[]).filter(p=>p.amount>0).length} pagos`:'Sin backups en este dispositivo';
 
+  const recesos=Array.isArray(s.recesos)?[...s.recesos].sort((a,b)=>(a.from||'').localeCompare(b.from||'')):[];
+  const fmtRec=d=>{if(!d)return'';const[Y,M,D]=d.split('-');return D+'/'+M+'/'+Y;};
+  const recDays=r=>{try{const a=new Date(r.from+'T12:00:00'),b=new Date(r.to+'T12:00:00');return Math.round((b-a)/86400000)+1;}catch(e){return'';}};
+  const recesosListHtml=recesos.length
+    ? recesos.map(r=>`<div style="display:flex;align-items:center;justify-content:space-between;gap:8px;padding:9px 12px;background:var(--bg3);border:1px solid var(--border);border-radius:var(--radius);margin-bottom:6px">
+        <div style="min-width:0"><div style="font-size:13px;font-weight:600">${(r.name||'Receso').replace(/</g,'&lt;')}</div>
+          <div style="font-size:11px;color:var(--text3)">${fmtRec(r.from)} → ${fmtRec(r.to)}${recDays(r)?` · ${recDays(r)} días`:''}</div></div>
+        <button class="btn ghost sm" onclick="deleteReceso('${r.id}')" title="Eliminar receso" style="color:var(--red)"><i class="ti ti-trash"></i></button>
+      </div>`).join('')
+    : '<div style="font-size:12px;color:var(--text3)">Sin recesos cargados.</div>';
+
   document.getElementById('page-settings').innerHTML=`
     <div class="page-header">
       <div><div class="page-title">Configuración</div></div>
@@ -5222,6 +5237,19 @@ function renderSettingsBase(){
         :`<div style="font-size:12px;color:var(--text3)">Ningún alumno tiene colegio asignado en su ficha.</div>`}
     </div>
 
+    <!-- RECESOS -->
+    <div class="card" style="margin-bottom:12px">
+      <div class="card-title"><i class="ti ti-beach"></i> Recesos / Períodos sin clases</div>
+      <div style="font-size:12px;color:var(--text3);margin-bottom:12px">Marcá rangos de fechas en los que <strong>ningún grupo</strong> tiene clase (vacaciones de invierno, etc.). Esos días no cuentan como clase ni piden asistencia, y aparecen como <strong>RECESO</strong> en el Diario, en Asistencias y en la vista de Marce.</div>
+      <div style="margin-bottom:12px">${recesosListHtml}</div>
+      <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:flex-end">
+        <div style="flex:2;min-width:160px"><label style="font-size:11px;color:var(--text3);display:block;margin-bottom:3px">Nombre</label><input id="rec-name" class="search-input" placeholder="Vacaciones de invierno" onkeydown="if(event.key==='Enter')addReceso()"></div>
+        <div style="flex:1;min-width:120px"><label style="font-size:11px;color:var(--text3);display:block;margin-bottom:3px">Desde</label><input id="rec-from" type="date" class="search-input"></div>
+        <div style="flex:1;min-width:120px"><label style="font-size:11px;color:var(--text3);display:block;margin-bottom:3px">Hasta</label><input id="rec-to" type="date" class="search-input"></div>
+        <button class="btn primary sm" onclick="addReceso()" style="height:38px"><i class="ti ti-plus"></i> Agregar</button>
+      </div>
+    </div>
+
     <!-- APPEARANCE -->
     <div class="card" style="margin-bottom:12px">
       <div class="card-title">Apariencia</div>
@@ -5248,6 +5276,35 @@ function renderSettingsBase(){
 }
 
 
+
+function addReceso(){
+  const name=(document.getElementById('rec-name')?.value||'').trim();
+  const from=document.getElementById('rec-from')?.value;
+  const to=document.getElementById('rec-to')?.value;
+  if(!from||!to)return toast('Completá las fechas Desde y Hasta','error');
+  if(from>to)return toast('La fecha "Desde" no puede ser posterior a "Hasta"','error');
+  const s=getSettings();
+  if(!Array.isArray(s.recesos))s.recesos=[];
+  s.recesos.push({id:uid(),name:name||'Receso',from,to});
+  s.recesos.sort((a,b)=>(a.from||'').localeCompare(b.from||''));
+  scheduleSave();
+  renderSettings();
+  if(typeof updatePendingBadge==='function')updatePendingBadge();
+  toast('Receso agregado');
+}
+
+async function deleteReceso(id){
+  const s=getSettings();
+  const r=(s.recesos||[]).find(x=>x.id===id);
+  if(r && typeof confirmDialog==='function'){
+    if(!await confirmDialog(`Se quitará el receso "${r.name||'Receso'}". Los días vuelven a contar como clase.`,{title:'Eliminar receso',icon:'🗑️',okLabel:'Eliminar',okClass:'danger'}))return;
+  }
+  s.recesos=(s.recesos||[]).filter(x=>x.id!==id);
+  scheduleSave();
+  renderSettings();
+  if(typeof updatePendingBadge==='function')updatePendingBadge();
+  toast('Receso eliminado');
+}
 
 function setTheme(theme){
   document.documentElement.setAttribute('data-theme',theme);
@@ -5796,16 +5853,31 @@ function getAbsentsForClass(gid, dateStr){
   }).map(s=>s.name);
 }
 
+// ── RECESOS (períodos globales sin clases: vacaciones de invierno, etc.) ──
+// Devuelve el nombre del receso si la fecha (YYYY-MM-DD) cae dentro de uno, o ''.
+function recesoNombre(dateStr){
+  const arr=(db.settings&&db.settings.recesos)||[];
+  for(const r of arr){ if(r&&r.from&&r.to&&dateStr>=r.from&&dateStr<=r.to) return r.name||'Receso'; }
+  return '';
+}
+// Etiqueta de día sin clase para un grupo: feriado puntual (dayNote) o receso global.
+// '' si hay clase normal. No escribe nada: es una capa de lectura sobre db.settings.
+function diaOff(gid,mk,day){
+  const note=(db.dayNotes[mk]||{})[`${gid}-${mk}-${day}`];
+  if(note) return note;
+  return recesoNombre(`${mk}-${String(day).padStart(2,'0')}`);
+}
+
 function isHolidayDate(gid, dateStr){
   const[y,m,d] = dateStr.split('-').map(Number);
   const mk = `${y}-${String(m).padStart(2,'0')}`;
-  return !!((db.dayNotes[mk]||{})[`${gid}-${mk}-${d}`]);
+  return !!diaOff(gid,mk,d);
 }
 
 function getHolidayNote(gid, dateStr){
   const[y,m,d] = dateStr.split('-').map(Number);
   const mk = `${y}-${String(m).padStart(2,'0')}`;
-  return (db.dayNotes[mk]||{})[`${gid}-${mk}-${d}`]||'';
+  return diaOff(gid,mk,d);
 }
 
 function markHolidayFromJournal(gid, dateStr, note){
