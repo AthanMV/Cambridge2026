@@ -175,7 +175,7 @@ const GROUP_SCHEDULE={
   'Superior':{days:[2,4],time:'20:00-21:30'}
 };
 
-let db={groups:[],students:[],attendance:{},dayNotes:{},grades:{},cambridge2025:[],exams:[]};
+let db={groups:[],students:[],attendance:{},dayNotes:{},settings:{},grades:{},cambridge2025:[],exams:[]};
 let lastHash='';let pollInterval=null;let currentTab='att';
 
 /* UTILS */
@@ -186,8 +186,13 @@ function dbHash(d){
   try{
     const attK=Object.values(d.attendance||{}).reduce((a,m)=>a+Object.keys(m).length,0);
     const dayN=Object.values(d.dayNotes||{}).reduce((a,m)=>a+Object.keys(m).length,0);
-    return (d.students||[]).length+'-'+attK+'-'+dayN+'-'+JSON.stringify(d.grades||{}).length+'-'+JSON.stringify(d.exams||[]).length;
+    return (d.students||[]).length+'-'+attK+'-'+dayN+'-'+JSON.stringify(d.grades||{}).length+'-'+JSON.stringify(d.exams||[]).length+'-'+JSON.stringify((d.settings&&d.settings.recesos)||[]).length;
   }catch(e){return '';}
+}
+function recesoOn(dateStr){
+  const arr=(db.settings&&db.settings.recesos)||[];
+  for(var i=0;i<arr.length;i++){var r=arr[i];if(r&&r.from&&r.to&&dateStr>=r.from&&dateStr<=r.to)return r.name||'Receso';}
+  return '';
 }
 function avatar(name,size=32,gender=''){
   const ini=name.split(' ').map(w=>w[0]).join('').slice(0,2).toUpperCase();
@@ -225,6 +230,7 @@ async function loadData(){
       if(d.students)db.students=d.students;
       if(d.attendance)db.attendance=d.attendance;
       if(d.dayNotes)db.dayNotes=d.dayNotes;
+      if(d.settings)db.settings=d.settings;
       if(d.grades)db.grades=d.grades;
       if(d.cambridge2025)db.cambridge2025=d.cambridge2025;
       if(d.exams)db.exams=d.exams;
@@ -255,6 +261,7 @@ function startPolling(){
         var d=rows[0].data;lastHash=h;
         if(d.groups)db.groups=d.groups;if(d.students)db.students=d.students;
         if(d.attendance)db.attendance=d.attendance;if(d.dayNotes)db.dayNotes=d.dayNotes;
+        if(d.settings)db.settings=d.settings;
         if(d.grades)db.grades=d.grades;
         if(d.exams)db.exams=d.exams;
         db.groups.forEach(function(g){var sc=GROUP_SCHEDULE[g.name];if(sc){if(!g.days||!g.days.length)g.days=sc.days;if(!g.time)g.time=sc.time;}});
@@ -315,7 +322,7 @@ function renderWeekView(){
     var dateLabel=info.date.toLocaleDateString('es-AR',{weekday:'long',day:'numeric',month:'long'});
     info.groups.forEach(function(item){
       var nk=item.g.id+'-'+item.mk+'-'+item.dayN;
-      if((db.dayNotes[item.mk]||{})[nk])return; // feriado/sin clase
+      if((db.dayNotes[item.mk]||{})[nk]||recesoOn(item.mk+'-'+String(item.dayN).padStart(2,'0')))return; // feriado/receso/sin clase
       var studs=db.students.filter(function(s){return s.groupId===item.g.id;});
       studs.forEach(function(s){
         if((db.attendance[item.g.id]||{})[item.mk]?.[s.id]?.[item.dayN]==='A'){
@@ -379,7 +386,7 @@ function renderWeekView(){
     info.groups.forEach(function(item){
       var studs=db.students.filter(function(s){return s.groupId===item.g.id;});
       var nk=item.g.id+'-'+item.mk+'-'+item.dayN;
-      var holiday=(db.dayNotes[item.mk]||{})[nk];
+      var holiday=(db.dayNotes[item.mk]||{})[nk]||recesoOn(item.mk+'-'+String(item.dayN).padStart(2,'0'));
       var absent=studs.filter(function(s){return !holiday&&(db.attendance[item.g.id]||{})[item.mk]?.[s.id]?.[item.dayN]==='A';});
       var present=holiday?[]:studs.filter(function(s){return (db.attendance[item.g.id]||{})[item.mk]?.[s.id]?.[item.dayN]!=='A';});
 
@@ -479,7 +486,7 @@ function renderTriAtt(gid,tri){
       for(var d=1;d<=dim;d++){
         if(!(g.days||[]).includes(new Date(yr,mo-1,d).getDay()))continue;
         var k=gid+'-'+mk+'-'+d;
-        if((db.dayNotes[mk]||{})[k])continue;
+        if((db.dayNotes[mk]||{})[k]||recesoOn(mk+'-'+String(d).padStart(2,'0')))continue;
         tc++;
         if((db.attendance[gid]||{})[mk]?.[s.id]?.[d]==='A')ab++;
       }
@@ -503,7 +510,7 @@ function renderTriAtt(gid,tri){
       for(var d=1;d<=dim;d++){
         if(!(g.days||[]).includes(new Date(yr,mo-1,d).getDay()))continue;
         var k=gid+'-'+mk+'-'+d;
-        if((db.dayNotes[mk]||{})[k])continue;
+        if((db.dayNotes[mk]||{})[k]||recesoOn(mk+'-'+String(d).padStart(2,'0')))continue;
         if((db.attendance[gid]||{})[mk]?.[s.id]?.[d]==='A')a++;
       }
       html+='<td class="tbl-num"><span class="badge '+(a===0?'green':a<=2?'amber':'red')+'" style="font-size:10px">'+(a===0?'✓':a+'A')+'</span></td>';
