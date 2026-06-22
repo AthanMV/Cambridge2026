@@ -295,7 +295,7 @@ body.projection-mode .card-num{padding:20px 24px;min-width:88px}
   <div class="topbar-brand">
     <div>
       <div class="brand-logo">Cambridge</div>
-      <div class="brand-sub">Diario de Clases 2026 <span class="version-tag" title="Versión del software">v2.15.0</span></div>
+      <div class="brand-sub">Diario de Clases 2026 <span class="version-tag" title="Versión del software">v2.20.0</span></div>
     </div>
   </div>
   <div class="topbar-controls">
@@ -427,7 +427,7 @@ const DAY_S=['Dom','Lun','Mar','Mié','Jue','Vie','Sáb'];
 // ── STATE ────────────────────────────────────────────────
 let db={groups:[],students:[],payments:[],families:[],teachers:[],teacherPayments:[],attendance:{},dayNotes:{},settings:{},grades:{},cambridge2025:[],classTypes:[],classLogs:{},schools:[],journal:{},oral:{}};
 let selGid='';
-const VERSION='2.15.0';
+const VERSION='2.20.0';
 let selMonth=curMonth();
 let lastHash='';
 let saveTimer=null;
@@ -482,10 +482,16 @@ function oralForDate(gid,dateStr){
   return (out.chapter||out.exam)?out:null;
 }
 
+function recesoNombre(dateStr){
+  const arr=(db.settings&&db.settings.recesos)||[];
+  for(const r of arr){ if(r&&r.from&&r.to&&dateStr>=r.from&&dateStr<=r.to) return r.name||'Receso'; }
+  return '';
+}
+
 function isHoliday(gid,dateStr){
   const[y,m,d]=dateStr.split('-').map(Number);
   const mk=`${y}-${String(m).padStart(2,'0')}`;
-  return !!((db.dayNotes[mk]||{})[`${gid}-${mk}-${d}`]);
+  return !!((db.dayNotes[mk]||{})[`${gid}-${mk}-${d}`]) || !!recesoNombre(dateStr);
 }
 
 function getAbsents(gid,dateStr){
@@ -862,6 +868,7 @@ function renderMain(){
 
     dates.forEach(dateStr=>{
       const entry=getJournalEntry(selGid,dateStr);
+      const recName=recesoNombre(dateStr);
       const holiday=isHoliday(selGid,dateStr)||entry.holiday;
       const absents=getAbsents(selGid,dateStr);
       const cn=classNumMap[dateStr];
@@ -882,7 +889,7 @@ function renderMain(){
 
       // Status badge
       let statusBadge='';
-      if(holiday) statusBadge='<span class="badge amber">🚫 Cancelada</span>';
+      if(holiday) statusBadge='<span class="badge amber">🚫 '+(recName||'Cancelada')+'</span>';
       else if(isToday) statusBadge='<span class="badge gold">✦ Hoy</span>';
       else if(isNextClass) statusBadge=`<span class="badge blue">→ Próxima ${daysUntil===1?'(mañana)':daysUntil>1?`(en ${daysUntil} días)`:''}</span>`;
       else if(isFuture&&!hasData) statusBadge='<span class="badge gray">Futura</span>';
@@ -921,7 +928,7 @@ function renderMain(){
 
       // Card body
       if(holiday){
-        html+=`<div class="card-body holiday-body"><div style="color:var(--amber);font-size:13px">🚫 Clase cancelada / Feriado</div></div>`;
+        html+=`<div class="card-body holiday-body"><div style="color:var(--amber);font-size:13px">🚫 ${recName?'Receso — '+recName:'Clase cancelada / Feriado'}</div></div>`;
       } else {
         const colCount=entry.notes?4:3;
         html+=`<div class="card-body" style="grid-template-columns:repeat(${colCount},1fr)">`;
