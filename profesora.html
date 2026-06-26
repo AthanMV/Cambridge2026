@@ -138,6 +138,7 @@ tr:hover td{background:var(--bg3)}
   <div class="tab active" id="tab-att" onclick="showTab('att')"><i class="ti ti-calendar-check"></i> Asistencias</div>
   <div class="tab" id="tab-grades" onclick="showTab('grades')"><i class="ti ti-clipboard-list"></i> Notas 2026</div>
   <div class="tab" id="tab-exams" onclick="showTab('exams')"><i class="ti ti-checklist"></i> Exámenes</div>
+  <div class="tab" id="tab-birthdays" onclick="showTab('birthdays')"><i class="ti ti-cake"></i> Cumpleaños</div>
 </div>
 
 <div class="main">
@@ -150,6 +151,7 @@ tr:hover td{background:var(--bg3)}
   </div>
   <div id="view-grades" style="display:none"></div>
   <div id="view-exams" style="display:none"></div>
+  <div id="view-birthdays" style="display:none"></div>
 </div>
 
 <script>
@@ -164,6 +166,7 @@ const GRADE_SUBJECTS=[
   {cat:'Oral Skill Work',items:['Reading and Comprehension','Listening','Speaking','Pronunciation']},
 ];
 const TRIMESTRES=[[3,4,5],[6,7,8],[9,10,11,12]];
+function currentTriP(){var m=new Date().getMonth()+1;for(var i=0;i<TRIMESTRES.length;i++){if(TRIMESTRES[i].includes(m))return String(i+1);}return '1';}
 const GROUP_SCHEDULE={
   'Kids 5':{days:[2,4],time:'16:00-17:30'},
   'Teens 2 Girls':{days:[2,4],time:'20:00-21:30'},
@@ -275,13 +278,100 @@ function startPolling(){
 /* TABS */
 function showTab(tab){
   currentTab=tab;
-  ['att','grades','exams'].forEach(function(t){
+  ['att','grades','exams','birthdays'].forEach(function(t){
     document.getElementById('tab-'+t).classList.toggle('active',t===tab);
     document.getElementById('view-'+t).style.display=t===tab?'':'none';
   });
   if(tab==='att')renderAtt();
   else if(tab==='exams')renderExamsView();
+  else if(tab==='birthdays')renderBirthdaysRO();
   else renderGrades();
+}
+
+/* ─── CUMPLEAÑOS (solo lectura) ─── */
+var _bdayROview='next';
+function bdaySetViewRO(v){ _bdayROview=v; renderBirthdaysRO(); }
+function renderBirthdaysRO(){
+  var view=_bdayROview;
+  var group=document.getElementById('bday-group')?document.getElementById('bday-group').value:'';
+  var q=(document.getElementById('bday-q')?document.getElementById('bday-q').value:'').toLowerCase().trim();
+  var now=new Date(); now.setHours(0,0,0,0);
+  var MES=['Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'];
+
+  var withDob=[], without=[];
+  (db.students||[]).forEach(function(s){
+    if(group && s.groupId!==group) return;
+    if(q && s.name.toLowerCase().indexOf(q)<0) return;
+    var dob=s.dob?parseDOB(s.dob):null;
+    if(dob && !isNaN(dob.getTime())){
+      var next=new Date(now.getFullYear(),dob.getMonth(),dob.getDate());
+      if(next<now)next.setFullYear(now.getFullYear()+1);
+      var daysUntil=Math.round((next-now)/86400000);
+      var isToday=dob.getMonth()===now.getMonth()&&dob.getDate()===now.getDate();
+      withDob.push({s:s,dob:dob,daysUntil:daysUntil,isToday:isToday,ageTurning:next.getFullYear()-dob.getFullYear()});
+    } else { without.push(s); }
+  });
+
+  function row(b, monthMode){
+    var s=b.s;
+    var dd=String(b.dob.getDate()).padStart(2,'0'), mm=String(b.dob.getMonth()+1).padStart(2,'0');
+    var right = b.isToday ? '<span class="badge gold">🎉 ¡Hoy!</span>'
+      : monthMode ? '<span style="font-size:12px;color:var(--text2)">cumple '+(now.getFullYear()-b.dob.getFullYear())+'</span>'
+      : '<span style="font-size:12px;color:var(--text3);white-space:nowrap">en '+b.daysUntil+' día'+(b.daysUntil!==1?'s':'')+'</span>';
+    var past = monthMode && b.dob.getMonth()===now.getMonth() && b.dob.getDate()<now.getDate() && !b.isToday;
+    return '<div style="display:flex;align-items:center;gap:10px;padding:9px 12px;border-bottom:1px solid var(--border);'+(past?'opacity:.5;':'')+(b.isToday?'background:var(--accent-bg);':'')+'">'
+      + avatar(s.name,32,s.gender||'')
+      + '<div style="flex:1;min-width:0"><div style="font-size:13px;font-weight:500">'+s.name+'</div>'
+      + '<div style="font-size:11px;color:var(--text3)">'+getGroup(s.groupId).name+' · '+dd+'/'+mm+(!monthMode?' · cumple '+b.ageTurning:'')+'</div></div>'
+      + right + '</div>';
+  }
+
+  var body='';
+  if(view==='next'){
+    var sorted=withDob.slice().sort(function(a,b){return a.daysUntil-b.daysUntil;});
+    body = sorted.length
+      ? '<div style="background:var(--bg2);border:1px solid var(--border);border-radius:14px;overflow:hidden">'+sorted.map(function(b){return row(b,false);}).join('')+'</div>'
+      : '<div class="empty"><i class="ti ti-cake"></i>Sin cumpleaños para mostrar</div>';
+  } else {
+    var months='';
+    for(var mo=0;mo<12;mo++){
+      var inMonth=withDob.filter(function(b){return b.dob.getMonth()===mo;}).sort(function(a,b){return a.dob.getDate()-b.dob.getDate();});
+      if(!inMonth.length)continue;
+      var isCur=mo===now.getMonth();
+      months+='<div style="margin-bottom:18px"><div style="display:flex;align-items:center;gap:10px;margin-bottom:8px">'
+        +'<span style="font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:0.08em;color:'+(isCur?'var(--accent)':'var(--text2)')+';'+(isCur?'background:var(--accent-bg);border:1px solid var(--accent-border);':'background:var(--bg3);border:1px solid var(--border);')+'border-radius:20px;padding:3px 12px">'+MES[mo]+(isCur?' · este mes':'')+'</span>'
+        +'<span style="font-size:11px;color:var(--text3)">'+inMonth.length+'</span><div style="flex:1;height:1px;background:var(--border)"></div></div>'
+        +'<div style="background:var(--bg2);border:1px solid var(--border);border-radius:14px;overflow:hidden">'+inMonth.map(function(b){return row(b,true);}).join('')+'</div></div>';
+    }
+    body = months || '<div class="empty"><i class="ti ti-cake"></i>Sin cumpleaños para mostrar</div>';
+  }
+
+  var sinFecha='';
+  if(without.length){
+    sinFecha='<div style="margin-top:22px"><div style="font-size:11px;letter-spacing:0.08em;text-transform:uppercase;color:var(--text3);margin-bottom:8px">Sin fecha cargada ('+without.length+')</div>'
+      +'<div style="background:var(--bg2);border:1px solid var(--border);border-radius:14px;overflow:hidden">'
+      + without.map(function(s){return '<div style="display:flex;align-items:center;gap:10px;padding:9px 12px;border-bottom:1px solid var(--border)">'+avatar(s.name,30,s.gender||'')+'<div style="flex:1;min-width:0"><div style="font-size:13px;font-weight:500">'+s.name+'</div><div style="font-size:11px;color:var(--text3)">'+getGroup(s.groupId).name+'</div></div></div>';}).join('')
+      +'</div></div>';
+  }
+
+  var groupOpts='<option value="">Todos los grupos</option>'+db.groups.map(function(g){return '<option value="'+g.id+'"'+(g.id===group?' selected':'')+'>'+g.name+'</option>';}).join('');
+  var todayCount=withDob.filter(function(b){return b.isToday;}).length;
+  var act='background:var(--accent);color:#fff;border-color:var(--accent)';
+  var selStyle='background:var(--bg3);border:1px solid var(--border2);border-radius:var(--radius);padding:6px 10px;color:var(--text);font-size:13px;outline:none';
+
+  document.getElementById('view-birthdays').innerHTML=
+    '<div style="font-family:var(--font-display);font-size:22px;font-weight:700;color:var(--text);margin-bottom:4px;margin-top:4px">🎂 Cumpleaños</div>'
+    +'<div style="font-size:12px;color:var(--text3);margin-bottom:14px">'+withDob.length+' con fecha · '+without.length+' sin cargar</div>'
+    +(todayCount?'<div style="border:1px solid var(--accent-border);background:var(--accent-bg);border-radius:12px;padding:12px 16px;margin-bottom:14px;font-size:13px;font-weight:600;color:var(--text)">🎉 Hoy cumple '+(todayCount===1?'1 alumno':todayCount+' alumnos')+'</div>':'')
+    +'<div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:16px;align-items:center">'
+      +'<div style="display:flex;gap:4px">'
+        +'<button class="btn sm" onclick="bdaySetViewRO(\'next\')" style="'+(view==='next'?act:'')+'"><i class="ti ti-flame"></i> Próximos</button>'
+        +'<button class="btn sm" onclick="bdaySetViewRO(\'month\')" style="'+(view==='month'?act:'')+'"><i class="ti ti-calendar"></i> Por mes</button>'
+      +'</div>'
+      +'<select id="bday-group" onchange="renderBirthdaysRO()" style="'+selStyle+';min-width:150px">'+groupOpts+'</select>'
+      +'<input id="bday-q" placeholder="🔍 Buscar alumno..." value="'+(q?q.replace(/"/g,'&quot;'):'')+'" oninput="renderBirthdaysRO()" style="'+selStyle+';flex:1;min-width:130px">'
+    +'</div>'
+    + body + sinFecha;
 }
 
 /* ─── ATTENDANCE ─── */
@@ -526,7 +616,7 @@ function renderTriAtt(gid,tri){
 /* ─── GRADES ─── */
 function renderGrades(){
   var gid=document.getElementById('gr-gid')?document.getElementById('gr-gid').value:'';
-  var tri=document.getElementById('gr-tri')?document.getElementById('gr-tri').value:'1';
+  var tri=document.getElementById('gr-tri')?document.getElementById('gr-tri').value:currentTriP();
   var vw=document.getElementById('gr-view')?document.getElementById('gr-view').value:'table';
 
   var html='<div style="font-family:var(--font-display);font-size:22px;font-weight:700;color:var(--text);margin-bottom:16px;margin-top:4px">Notas 2026</div>';
@@ -569,7 +659,7 @@ function renderGrades(){
 function switchGradeView(vw){
   // Store the selection and re-render without losing group/tri selectors
   var gid=document.getElementById('gr-gid')?document.getElementById('gr-gid').value:'';
-  var tri=document.getElementById('gr-tri')?document.getElementById('gr-tri').value:'1';
+  var tri=document.getElementById('gr-tri')?document.getElementById('gr-tri').value:currentTriP();
   // Temporarily inject a hidden select so renderGrades reads the new view
   var dummy=document.createElement('select');dummy.id='gr-view';dummy.style.display='none';
   var opt=document.createElement('option');opt.value=vw;opt.selected=true;dummy.appendChild(opt);
