@@ -132,7 +132,7 @@ body{background:var(--bg);color:var(--text);min-height:100vh}
 .card-status{display:flex;gap:6px;align-items:center;flex-wrap:wrap;margin-top:4px}
 .card-actions{padding:12px 14px;display:flex;align-items:center;gap:6px;flex-shrink:0}
 
-.card-body{padding:18px 20px;display:grid;grid-template-columns:1fr 1fr 1fr;gap:16px}
+.card-body{padding:14px 18px;display:flex;flex-direction:column;gap:6px}
 .card-body.holiday-body{padding:16px 20px}
 
 .section-label{
@@ -249,27 +249,26 @@ body{background:var(--bg);color:var(--text);min-height:100vh}
 /* SYNC TIMESTAMP */
 .sync-ts{font-size:10px;color:var(--text3);opacity:0.6}
 
-/* PROJECTION MODE */
-body.projection-mode{font-size:18px}
-body.projection-mode .topbar{padding:10px 20px}
-body.projection-mode .brand-logo{font-size:22px}
-body.projection-mode .group-tab{font-size:16px;padding:10px 22px}
-body.projection-mode .card-num-val{font-size:34px}
-body.projection-mode .card-date{font-size:18px}
-body.projection-mode .section-content{font-size:17px;line-height:1.7}
-body.projection-mode .section-label{font-size:11px}
-body.projection-mode .badge{font-size:13px;padding:5px 12px}
-body.projection-mode .card-body{gap:24px;padding:24px}
-body.projection-mode .stats-bar{display:none}
-body.projection-mode .topbar-controls .month-nav{display:none}
-body.projection-mode .topbar-controls .btn:not(#btn-projection){display:none}
-body.projection-mode .card-actions{display:none}
-body.projection-mode .class-card.future{display:none}
-body.projection-mode .week-num{font-size:13px}
-.projection-badge{display:none}
-body.projection-mode .projection-badge{display:inline-flex}
-body.projection-mode .absent-chip{font-size:14px;padding:5px 12px}
-body.projection-mode .card-num{padding:20px 24px;min-width:88px}
+/* VIEW MODE SWITCHER */
+.mode-row{display:flex;flex-wrap:wrap;gap:6px;align-items:center;margin-bottom:16px}
+.mode-btn{padding:7px 14px;border-radius:var(--radius);border:1px solid var(--border2);background:var(--bg3);color:var(--text2);cursor:pointer;font-size:13px;font-weight:500;display:inline-flex;align-items:center;gap:5px;transition:all 0.15s;font-family:'DM Sans',sans-serif}
+.mode-btn:hover{background:var(--bg4);color:var(--text)}
+.mode-btn.active{background:var(--accent);color:#fff;border-color:var(--accent);font-weight:600}
+.mode-input{background:var(--bg3);border:1px solid var(--border2);border-radius:var(--radius);padding:7px 12px;color:var(--text);font-family:'DM Sans',sans-serif;font-size:13px;outline:none}
+.mode-input:focus{border-color:var(--accent)}
+
+/* SUMMARY CARDS (restantes / próximas) */
+.summary-card{background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius-lg);padding:12px 16px;margin-bottom:14px}
+.summary-title{font-size:11px;font-weight:700;color:var(--accent);text-transform:uppercase;letter-spacing:0.06em;margin-bottom:8px}
+.month-pill{font-size:11px;background:var(--bg3);border:1px solid var(--border);border-radius:14px;padding:3px 9px}
+.upcoming-row{display:flex;align-items:center;gap:10px;padding:7px 0;border-bottom:1px solid var(--border);cursor:pointer}
+.upcoming-row:last-child{border-bottom:none}
+.month-header{font-size:15px;font-weight:700;font-family:var(--font-display);text-transform:capitalize;margin:18px 0 10px;color:var(--text)}
+
+/* ENTRY LINES (stacked card body, estilo index) */
+.entry-line{font-size:13px;color:var(--text2);line-height:1.55;white-space:pre-wrap;word-break:break-word}
+.entry-line.notes{color:var(--text);font-weight:500}
+.entry-tag{font-size:10px;text-transform:uppercase;letter-spacing:0.05em;color:var(--text3);font-weight:600;margin-right:3px}
 
 /* ABSENT TOGGLE ANIMATION */
 @keyframes absentFlash{0%{transform:scale(1)}30%{transform:scale(1.04)}100%{transform:scale(1)}}
@@ -295,7 +294,7 @@ body.projection-mode .card-num{padding:20px 24px;min-width:88px}
   <div class="topbar-brand">
     <div>
       <div class="brand-logo">Cambridge</div>
-      <div class="brand-sub">Diario de Clases 2026 <span class="version-tag" title="Versión del software">v2.20.0</span></div>
+      <div class="brand-sub">Diario de Clases 2026 <span class="version-tag" title="Versión del software">v2.21.0</span></div>
     </div>
   </div>
   <div class="topbar-controls">
@@ -312,9 +311,6 @@ body.projection-mode .card-num{padding:20px 24px;min-width:88px}
         <span id="sync-ts" class="sync-ts"></span>
       </div>
     </div>
-    <button class="btn sm" id="btn-projection" onclick="toggleProjection()" title="Modo proyección">
-      <i class="ti ti-presentation" id="proj-icon"></i>
-    </button>
     <button class="btn sm ghost" onclick="toggleTheme()" title="Cambiar tema · Mantené presionado para auto" oncontextmenu="clearThemePref();return false">
       <i class="ti ti-moon" id="theme-btn-icon"></i>
     </button>
@@ -423,12 +419,20 @@ const GROUP_SCHEDULE = {
 const MONTHS_ES=['enero','febrero','marzo','abril','mayo','junio','julio','agosto','septiembre','octubre','noviembre','diciembre'];
 const DAYS_ES=['domingo','lunes','martes','miércoles','jueves','viernes','sábado'];
 const DAY_S=['Dom','Lun','Mar','Mié','Jue','Vie','Sáb'];
+const TRIMESTRES=[[3,4,5],[6,7,8],[9,10,11,12]];
+function getTrimestre(dateStr){const mo=parseInt(dateStr.split('-')[1]);const idx=TRIMESTRES.findIndex(t=>t.includes(mo));return idx>=0?idx+1:null;}
+function getTrimonths(tri){return TRIMESTRES[tri-1]||[];}
+function curTrimestre(){return getTrimestre(today())||1;}
 
 // ── STATE ────────────────────────────────────────────────
 let db={groups:[],students:[],payments:[],families:[],teachers:[],teacherPayments:[],attendance:{},dayNotes:{},settings:{},grades:{},cambridge2025:[],classTypes:[],classLogs:{},schools:[],journal:{},oral:{}};
 let selGid='';
-const VERSION='2.20.0';
+const VERSION='2.21.0';
 let selMonth=curMonth();
+let selMode='month';            // 'month' | 'tri' | 'year' | 'range'
+let selTri=String(curTrimestre());
+let selFrom='';
+let selTo='';
 let lastHash='';
 let saveTimer=null;
 let saveRetryCount=0;
@@ -527,25 +531,6 @@ function setSyncStatus(state,label){
   if(state==='ok'){
     const ts=document.getElementById('sync-ts');
     if(ts){const t=new Date();ts.textContent=`${String(t.getHours()).padStart(2,'0')}:${String(t.getMinutes()).padStart(2,'0')}`;}
-  }
-}
-
-// ── PROJECTION MODE ───────────────────────────────────────
-let projectionMode=false;
-function toggleProjection(){
-  projectionMode=!projectionMode;
-  document.body.classList.toggle('projection-mode',projectionMode);
-  const icon=document.getElementById('proj-icon');
-  if(icon)icon.className=projectionMode?'ti ti-presentation-off':'ti ti-presentation';
-  if(projectionMode){
-    // Collapse past cards automatically for clean display
-    document.querySelectorAll('.class-card:not(.today):not(.next-class)').forEach(c=>{
-      if(!c.classList.contains('future'))c.classList.add('collapsed');
-    });
-    toast('Modo proyección activado — clases pasadas colapsadas','info');
-  } else {
-    document.querySelectorAll('.class-card.collapsed').forEach(c=>c.classList.remove('collapsed'));
-    toast('Modo proyección desactivado');
   }
 }
 
@@ -748,19 +733,29 @@ function startPolling(){
 
 // ── NAVIGATION ───────────────────────────────────────────
 function prevMonth(){
+  selMode='month';
   const[y,m]=selMonth.split('-').map(Number);
   const d=new Date(y,m-2,1);
   selMonth=d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0');
   renderMain();
 }
 function nextMonth(){
+  selMode='month';
   const[y,m]=selMonth.split('-').map(Number);
   const d=new Date(y,m,1);
   selMonth=d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0');
   renderMain();
 }
 function goToday(){
+  selMode='month';
   selMonth=curMonth();
+  renderMain();
+}
+function setMode(m){selMode=m;renderMain();}
+function setPeriodInput(){
+  const tri=document.getElementById('jrn-tri');if(tri)selTri=tri.value;
+  const f=document.getElementById('jrn-from');if(f)selFrom=f.value;
+  const t=document.getElementById('jrn-to');if(t)selTo=t.value;
   renderMain();
 }
 function selectGroup(gid){
@@ -781,10 +776,42 @@ function buildGroupTabs(){
 }
 
 function updateMonthLabel(){
-  const[y,m]=selMonth.split('-').map(Number);
-  document.getElementById('month-label').textContent=MONTHS_ES[m-1]+' '+y;
-  // Highlight today btn
-  document.getElementById('btn-today').style.opacity=selMonth===curMonth()?'0.4':'1';
+  const lbl=document.getElementById('month-label');
+  const nav=document.querySelector('.month-nav');
+  if(selMode==='month'){
+    const[y,m]=selMonth.split('-').map(Number);
+    lbl.textContent=MONTHS_ES[m-1]+' '+y;
+    if(nav)nav.style.opacity='1';
+  } else if(selMode==='tri'){
+    lbl.textContent=selTri+'° Trimestre';
+    if(nav)nav.style.opacity='0.35';
+  } else if(selMode==='year'){
+    lbl.textContent='Año 2026';
+    if(nav)nav.style.opacity='0.35';
+  } else {
+    lbl.textContent='Entre fechas';
+    if(nav)nav.style.opacity='0.35';
+  }
+  document.getElementById('btn-today').style.opacity=(selMode==='month'&&selMonth===curMonth())?'0.4':'1';
+}
+
+function visibleDates(allDates){
+  if(selMode==='month') return allDates.filter(d=>d.startsWith(selMonth));
+  if(selMode==='tri'){
+    const yr=(allDates[0]||today()).slice(0,4);
+    const ms=getTrimonths(parseInt(selTri)).map(mo=>yr+'-'+String(mo).padStart(2,'0'));
+    return allDates.filter(d=>ms.includes(d.slice(0,7)));
+  }
+  if(selMode==='range'){ if(!selFrom||!selTo)return null; return allDates.filter(d=>d>=selFrom&&d<=selTo); }
+  return allDates.slice(); // year
+}
+
+function weekRange(w){
+  const start=new Date(CYCLE_MONDAY+'T12:00:00');
+  const monday=new Date(start);monday.setDate(start.getDate()+(w-1)*7);
+  const friday=new Date(monday);friday.setDate(monday.getDate()+4);
+  const fmt=d=>d.toLocaleDateString('es-AR',{day:'numeric',month:'short'});
+  return`${fmt(monday)} — ${fmt(friday)}`;
 }
 
 function renderMain(){
@@ -796,192 +823,225 @@ function renderMain(){
   const g=getGroup(selGid);
   const allDates=getClassDates(g);
   const classNumMap={};allDates.forEach((d,i)=>{classNumMap[d]=i+1;});
-  const monthDates=allDates.filter(d=>d.startsWith(selMonth));
   const todayStr=today();
-  const[y,m]=selMonth.split('-').map(Number);
 
-  if(!monthDates.length){
-    document.getElementById('main-content').innerHTML=
-      `<div class="empty"><i class="ti ti-calendar-off"></i><p>Sin clases en ${MONTHS_ES[m-1]} ${y} para ${g.name}</p></div>`;
-    return;
-  }
-
-  // Stats for this month
-  const pastDates=monthDates.filter(d=>d<=todayStr);
-  const loaded=pastDates.filter(d=>{const e=getJournalEntry(selGid,d);return(e.notes||e.material||e.homework)&&!isHoliday(selGid,d)&&!e.holiday;}).length;
-  const holidays=monthDates.filter(d=>isHoliday(selGid,d)||getJournalEntry(selGid,d).holiday).length;
-  const pending=pastDates.length-loaded-holidays;
-  const pct=pastDates.length>0?Math.round(loaded/Math.max(pastDates.length-holidays,1)*100):0;
-
-  // Find next class date
-  const nextClassDate=monthDates.find(d=>d>=todayStr&&!getJournalEntry(selGid,d).holiday&&!isHoliday(selGid,d))||null;
-
-  // Group by cycle week
-  const byWeek={};
-  monthDates.forEach(d=>{
-    const w=getCycleWeek(d)||1;
-    if(!byWeek[w])byWeek[w]=[];
-    byWeek[w].push(d);
-  });
-
-  // Build week boundaries (Mon-Fri)
-  function weekRange(w){
-    const start=new Date(CYCLE_MONDAY+'T12:00:00');
-    const monday=new Date(start);monday.setDate(start.getDate()+(w-1)*7);
-    const friday=new Date(monday);friday.setDate(monday.getDate()+4);
-    const fmt=d=>d.toLocaleDateString('es-AR',{day:'numeric',month:'short'});
-    return`${fmt(monday)} — ${fmt(friday)}`;
+  // ── Selector de período (Mes / Trimestre / Año / Entre fechas) ──
+  const modeBtn=(mm,lbl,ic)=>`<button class="mode-btn${selMode===mm?' active':''}" onclick="setMode('${mm}')"><i class="ti ti-${ic}"></i> ${lbl}</button>`;
+  let periodInputs='';
+  if(selMode==='month'){
+    periodInputs=`<input type="month" class="mode-input" value="${selMonth}" onchange="selMonth=this.value;renderMain()">`;
+  } else if(selMode==='tri'){
+    periodInputs=`<select class="mode-input" id="jrn-tri" onchange="setPeriodInput()">
+      <option value="1"${selTri==='1'?' selected':''}>1° Trim (Mar–May)</option>
+      <option value="2"${selTri==='2'?' selected':''}>2° Trim (Jun–Ago)</option>
+      <option value="3"${selTri==='3'?' selected':''}>3° Trim (Sep–Dic)</option>
+    </select>`;
+  } else if(selMode==='range'){
+    periodInputs=`<input type="date" id="jrn-from" class="mode-input" value="${selFrom}" onchange="setPeriodInput()" title="Desde">
+      <span style="align-self:center;color:var(--text3)">→</span>
+      <input type="date" id="jrn-to" class="mode-input" value="${selTo}" onchange="setPeriodInput()" title="Hasta">`;
   }
 
   let html='';
-
-  // Stats bar
-  html+=`<div class="stats-bar">
-    <div class="stat-item"><div class="stat-num" style="color:var(--accent)">${allDates.length}</div><div class="stat-lbl">Total</div></div>
-    <div class="stat-div"></div>
-    <div class="stat-item"><div class="stat-num" style="color:var(--blue)">${monthDates.length}</div><div class="stat-lbl">Este mes</div></div>
-    <div class="stat-div"></div>
-    <div class="stat-item"><div class="stat-num" style="color:var(--green)">${loaded}</div><div class="stat-lbl">Cargadas</div></div>
-    <div class="stat-div"></div>
-    <div class="stat-item"><div class="stat-num" style="color:var(--red)">${pending}</div><div class="stat-lbl">Pendientes</div></div>
-    <div class="stat-div"></div>
-    <div class="stat-item"><div class="stat-num" style="color:var(--text3)">${monthDates.filter(d=>d>todayStr).length}</div><div class="stat-lbl">Futuras</div></div>
-    <div class="stat-div"></div>
-    <div class="progress-bar-wrap">
-      <div style="display:flex;justify-content:space-between;align-items:center">
-        <span class="stat-lbl">Carga del mes</span>
-        <span class="progress-pct">${pct}%</span>
-      </div>
-      <div class="progress-bar-track"><div class="progress-bar-fill" style="width:${pct}%"></div></div>
-    </div>
-    <div style="margin-left:auto;font-size:12px;color:var(--text3);text-align:right">${g.name}<br>${g.time} · ${(g.days||[]).map(d=>DAY_S[d]).join('+')}</div>
+  html+=`<div class="mode-row">
+    ${modeBtn('month','Mes','calendar')}
+    ${modeBtn('tri','Trimestre','calendar-stats')}
+    ${modeBtn('year','Año','calendar-event')}
+    ${modeBtn('range','Entre fechas','calendar-search')}
+    <div style="flex:1 1 8px"></div>
+    ${periodInputs}
   </div>`;
 
-  // Weeks
-  Object.entries(byWeek).sort(([a],[b])=>Number(a)-Number(b)).forEach(([week,dates])=>{
-    html+=`<div class="week-section">
-      <div class="week-header">
-        <span class="week-num">Semana ${week}</span>
-        <span class="week-dates">${weekRange(Number(week))}</span>
-        <div class="week-divider"></div>
+  // ── Datos del año (para stats globales, restantes y próximas) ──
+  const remaining=allDates.filter(d=>d>todayStr&&!isHoliday(selGid,d)&&!getJournalEntry(selGid,d).holiday);
+
+  // ── Dates visibles según modo ──
+  const visible=visibleDates(allDates);
+
+  // ── Stats del período visible ──
+  if(visible&&visible.length){
+    const vp=visible.filter(d=>d<=todayStr);
+    const vHol=visible.filter(d=>isHoliday(selGid,d)||getJournalEntry(selGid,d).holiday).length;
+    const vpHol=vp.filter(d=>isHoliday(selGid,d)||getJournalEntry(selGid,d).holiday).length;
+    const vLoaded=vp.filter(d=>{const e=getJournalEntry(selGid,d);return(e.notes||e.material||e.homework)&&!isHoliday(selGid,d)&&!e.holiday;}).length;
+    const vPending=vp.length-vLoaded-vpHol;
+    const vFuture=visible.filter(d=>d>todayStr).length;
+    const vPct=vp.length>0?Math.round(vLoaded/Math.max(vp.length-vpHol,1)*100):0;
+    const periodLbl=selMode==='month'?'Este mes':selMode==='tri'?'Trimestre':selMode==='year'?'Este año':'Período';
+    html+=`<div class="stats-bar">
+      <div class="stat-item"><div class="stat-num" style="color:var(--accent)">${allDates.length}</div><div class="stat-lbl">Total año</div></div>
+      <div class="stat-div"></div>
+      <div class="stat-item"><div class="stat-num" style="color:var(--blue)">${visible.length}</div><div class="stat-lbl">${periodLbl}</div></div>
+      <div class="stat-div"></div>
+      <div class="stat-item"><div class="stat-num" style="color:var(--green)">${vLoaded}</div><div class="stat-lbl">Cargadas</div></div>
+      <div class="stat-div"></div>
+      <div class="stat-item"><div class="stat-num" style="color:var(--red)">${vPending}</div><div class="stat-lbl">Pendientes</div></div>
+      <div class="stat-div"></div>
+      <div class="stat-item"><div class="stat-num" style="color:var(--text3)">${vFuture}</div><div class="stat-lbl">Futuras</div></div>
+      <div class="stat-div"></div>
+      <div class="progress-bar-wrap">
+        <div style="display:flex;justify-content:space-between;align-items:center">
+          <span class="stat-lbl">Carga del período</span>
+          <span class="progress-pct">${vPct}%</span>
+        </div>
+        <div class="progress-bar-track"><div class="progress-bar-fill" style="width:${vPct}%"></div></div>
+      </div>
+      <div style="margin-left:auto;font-size:12px;color:var(--text3);text-align:right">${g.name}<br>${g.time} · ${(g.days||[]).map(d=>DAY_S[d]).join('+')}</div>
+    </div>`;
+  }
+
+  // ── Clases que restan (desglose anual) ──
+  const remTri={1:0,2:0,3:0}, remMonth={};
+  remaining.forEach(d=>{const t=getTrimestre(d);if(t)remTri[t]++;const mk=d.slice(0,7);remMonth[mk]=(remMonth[mk]||0)+1;});
+  const MES3=['','Ene','Feb','Mar','Abr','May','Jun','Jul','Ago','Sep','Oct','Nov','Dic'];
+  html+=`<div class="summary-card">
+    <div class="summary-title">Clases que restan — ${remaining.length} en total</div>
+    <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:${Object.keys(remMonth).length?'8px':'0'}">
+      ${[1,2,3].map(t=>`<span class="badge ${remTri[t]?'blue':'gray'}">${t}° Trim: ${remTri[t]}</span>`).join('')}
+    </div>`;
+  const remKeys=Object.keys(remMonth).sort();
+  if(remKeys.length){
+    html+=`<div style="display:flex;gap:6px;flex-wrap:wrap">${remKeys.map(mk=>{const mo=parseInt(mk.slice(5,7));return `<span class="month-pill">${MES3[mo]} ${mk.slice(0,4)}: <strong>${remMonth[mk]}</strong></span>`;}).join('')}</div>`;
+  }
+  html+=`</div>`;
+
+  // ── Próximas clases (acceso rápido) ──
+  const upcoming=remaining.slice(0,6);
+  if(upcoming.length){
+    let up='';
+    upcoming.forEach(d=>{
+      const e=getJournalEntry(selGid,d);const has=e.notes||e.material||e.homework;
+      const dd=new Date(d+'T12:00:00');
+      const lbl=dd.toLocaleDateString('es-AR',{weekday:'short',day:'numeric',month:'short'});
+      up+=`<div class="upcoming-row" onclick="openEntry('${selGid}','${d}',${classNumMap[d]},'${getCycleWeek(d)||1}')">
+        <span style="font-size:11px;color:var(--text3);min-width:52px">Clase ${classNumMap[d]}</span>
+        <span style="flex:1;font-size:13px;text-transform:capitalize">${lbl}</span>
+        ${has?'<span class="badge green" style="font-size:10px">✓ cargada</span>':'<span class="badge gray" style="font-size:10px">sin cargar</span>'}
+        <i class="ti ti-chevron-right" style="color:var(--text3)"></i>
       </div>`;
+    });
+    html+=`<div class="summary-card"><div class="summary-title" style="color:var(--text2)">⏭ Próximas clases</div>${up}</div>`;
+  }
 
-    dates.forEach(dateStr=>{
-      const entry=getJournalEntry(selGid,dateStr);
-      const recName=recesoNombre(dateStr);
-      const holiday=isHoliday(selGid,dateStr)||entry.holiday;
-      const absents=getAbsents(selGid,dateStr);
-      const cn=classNumMap[dateStr];
-      const d=new Date(dateStr+'T12:00:00');
-      const isToday=dateStr===todayStr;
-      const isFuture=dateStr>todayStr;
-      const hasData=entry.notes||entry.material||entry.homework;
-      const dayLabel=d.toLocaleDateString('es-AR',{weekday:'long',day:'numeric',month:'long'});
+  // ── Detalle del período ──
+  if(visible===null){
+    html+='<div class="empty"><i class="ti ti-calendar-search"></i><p>Elegí las dos fechas del rango</p></div>';
+    document.getElementById('main-content').innerHTML=html;return;
+  }
+  if(!visible.length){
+    html+=`<div class="empty"><i class="ti ti-calendar-off"></i><p>Sin clases en este período para ${g.name}</p></div>`;
+    document.getElementById('main-content').innerHTML=html;return;
+  }
 
-      const isNextClass=dateStr===nextClassDate&&!isToday;
-      const daysUntil=isNextClass?Math.round((new Date(dateStr+'T12:00:00')-new Date(todayStr+'T12:00:00'))/(86400000)):0;
+  const nextClassDate=visible.find(d=>d>=todayStr&&!getJournalEntry(selGid,d).holiday&&!isHoliday(selGid,d))||null;
 
-      let cardClass='class-card';
-      if(isToday)cardClass+=' today';
-      if(isNextClass)cardClass+=' next-class';
-      if(isFuture&&!hasData&&!isNextClass)cardClass+=' future';
-      if(holiday)cardClass+=' holiday';
-
-      // Status badge
-      let statusBadge='';
-      if(holiday) statusBadge='<span class="badge amber">🚫 '+(recName||'Cancelada')+'</span>';
-      else if(isToday) statusBadge='<span class="badge gold">✦ Hoy</span>';
-      else if(isNextClass) statusBadge=`<span class="badge blue">→ Próxima ${daysUntil===1?'(mañana)':daysUntil>1?`(en ${daysUntil} días)`:''}</span>`;
-      else if(isFuture&&!hasData) statusBadge='<span class="badge gray">Futura</span>';
-      else if(hasData) statusBadge='<span class="badge green">✓ Cargada</span>';
-      else statusBadge='<span class="badge red">Sin cargar</span>';
-
-      const todayAnchor=isToday||isNextClass?'today-anchor':'';
-      const cardId=isToday?'today-card':isNextClass?'next-card':'';
-      html+=`<div class="${cardClass} ${todayAnchor}" id="${cardId}">`;
-
-      // Card head
-      html+=`<div class="card-head">
-        <div class="card-num">
-          <div class="card-num-label">Clase</div>
-          <div class="card-num-val">${cn}</div>
-          <div class="card-num-week">Sem. ${week}</div>
-        </div>
-        <div class="card-meta">
-          <div class="card-date">${dayLabel}</div>
-          <div class="card-status">
-            ${statusBadge}
-            <span class="badge purple projection-badge"><i class="ti ti-presentation" style="font-size:11px"></i> En pantalla</span>
-            ${absents.length&&!holiday?`<span class="badge red">${absents.length} ausente${absents.length!==1?'s':''}</span>`:''}
-            ${(()=>{const od=oralForDate(selGid,dateStr);if(!od)return '';let b='';if(od.chapter)b+=`<span class="badge blue" title="Capítulo programado">📖 Cap. ${od.chapter.n||''}${od.chapter.title?': '+od.chapter.title:''}</span>`;if(od.exam)b+=`<span class="badge gold" title="Examen oral">🎤 Examen oral</span>`;return b;})()}
-          </div>
-        </div>
-        <div class="card-actions">
-          <button class="collapse-btn" onclick="toggleCollapse(this,event)" title="Expandir/colapsar">
-            <i class="ti ti-chevron-up"></i>
-          </button>
-          <button class="btn sm" onclick="openEntry('${selGid}','${dateStr}',${cn},'${week}')">
-            <i class="ti ti-${hasData||holiday?'edit':'plus'}"></i> ${hasData||holiday?'Editar':'Cargar'}
-          </button>
-        </div>
-      </div>`;
-
-      // Card body
-      if(holiday){
-        html+=`<div class="card-body holiday-body"><div style="color:var(--amber);font-size:13px">🚫 ${recName?'Receso — '+recName:'Clase cancelada / Feriado'}</div></div>`;
-      } else {
-        const colCount=entry.notes?4:3;
-        html+=`<div class="card-body" style="grid-template-columns:repeat(${colCount},1fr)">`;
-
-        // Absent students
-        html+=`<div>
-          <div class="section-label"><i class="ti ti-users"></i> Alumnos</div>`;
-        if(absents.length){
-          html+=`<div class="absent-chips">
-            ${absents.map(s=>`<div class="absent-chip">${avatar(s.name,18,s.gender||'')} ${s.name.split(' ')[0]}</div>`).join('')}
-          </div>`;
-        } else {
-          html+=`<div class="section-content empty">Todos presentes</div>`;
-        }
-        html+=`</div>`;
-
-        // Material
-        html+=`<div>
-          <div class="section-label"><i class="ti ti-book-2"></i> Material</div>
-          <div class="section-content ${entry.material?'':'empty'}">${entry.material||'Sin cargar'}</div>
+  // Agrupar por mes (si no es modo Mes) y luego por semana del ciclo
+  const showMonthHdr=selMode!=='month';
+  const byMonth={};
+  visible.forEach(d=>{const mk=d.slice(0,7);(byMonth[mk]=byMonth[mk]||[]).push(d);});
+  Object.keys(byMonth).sort().forEach(mk=>{
+    if(showMonthHdr){
+      const mo=parseInt(mk.slice(5,7));
+      html+=`<div class="month-header">${MONTHS_ES[mo-1]} ${mk.slice(0,4)}</div>`;
+    }
+    const byWeek={};
+    byMonth[mk].forEach(d=>{const w=getCycleWeek(d)||1;(byWeek[w]=byWeek[w]||[]).push(d);});
+    Object.entries(byWeek).sort(([a],[b])=>Number(a)-Number(b)).forEach(([week,dates])=>{
+      html+=`<div class="week-section">
+        <div class="week-header">
+          <span class="week-num">Semana ${week}</span>
+          <span class="week-dates">${weekRange(Number(week))}</span>
+          <div class="week-divider"></div>
         </div>`;
-
-        // Homework
-        html+=`<div>
-          <div class="section-label"><i class="ti ti-home-check"></i> Tarea</div>
-          <div class="section-content ${entry.homework?'':'empty'}">${entry.homework||'Sin tarea'}</div>
-        </div>`;
-
-        // Notes (4th column if present)
-        if(entry.notes){
-          html+=`<div>
-            <div class="section-label"><i class="ti ti-notes"></i> Anotaciones</div>
-            <div class="section-content">${entry.notes}</div>
-          </div>`;
-        }
-
-        html+=`</div>`;
-      }
-
+      dates.forEach(dateStr=>{ html+=classCard(dateStr,classNumMap[dateStr],Number(week),todayStr,nextClassDate); });
       html+=`</div>`;
     });
-
-    html+=`</div>`;
   });
 
   document.getElementById('main-content').innerHTML=html;
 
-  // Scroll to today or next class
+  // Scroll a hoy / próxima clase (solo en modo Mes del mes actual)
   requestAnimationFrame(()=>{
     const anchor=document.getElementById('today-card')||document.getElementById('next-card');
-    if(anchor&&selMonth===curMonth())anchor.scrollIntoView({behavior:'smooth',block:'start'});
+    if(anchor&&selMode==='month'&&selMonth===curMonth())anchor.scrollIntoView({behavior:'smooth',block:'start'});
   });
 }
+
+// Tarjeta de clase: cabecera con Nº de clase + badges (estilo diario),
+// cuerpo apilado Material/Tarea/Anotaciones (estilo index).
+function classCard(dateStr,cn,week,todayStr,nextClassDate){
+  const entry=getJournalEntry(selGid,dateStr);
+  const recName=recesoNombre(dateStr);
+  const holiday=isHoliday(selGid,dateStr)||entry.holiday;
+  const absents=getAbsents(selGid,dateStr);
+  const d=new Date(dateStr+'T12:00:00');
+  const isToday=dateStr===todayStr;
+  const isFuture=dateStr>todayStr;
+  const hasData=entry.notes||entry.material||entry.homework;
+  const dayLabel=d.toLocaleDateString('es-AR',{weekday:'long',day:'numeric',month:'long'});
+  const isNextClass=dateStr===nextClassDate&&!isToday;
+  const daysUntil=isNextClass?Math.round((new Date(dateStr+'T12:00:00')-new Date(todayStr+'T12:00:00'))/86400000):0;
+
+  let cardClass='class-card';
+  if(isToday)cardClass+=' today';
+  if(isNextClass)cardClass+=' next-class';
+  if(isFuture&&!hasData&&!isNextClass)cardClass+=' future';
+  if(holiday)cardClass+=' holiday';
+
+  let statusBadge='';
+  if(holiday) statusBadge='<span class="badge amber">🚫 '+(recName||'Cancelada')+'</span>';
+  else if(isToday) statusBadge='<span class="badge gold">✦ Hoy</span>';
+  else if(isNextClass) statusBadge=`<span class="badge blue">→ Próxima ${daysUntil===1?'(mañana)':daysUntil>1?`(en ${daysUntil} días)`:''}</span>`;
+  else if(isFuture&&!hasData) statusBadge='<span class="badge gray">Futura</span>';
+  else if(hasData) statusBadge='<span class="badge green">✓ Cargada</span>';
+  else statusBadge='<span class="badge red">Sin cargar</span>';
+
+  const oralBadges=(()=>{const od=oralForDate(selGid,dateStr);if(!od)return '';let b='';if(od.chapter)b+=`<span class="badge blue" title="Capítulo programado">📖 Cap. ${od.chapter.n||''}${od.chapter.title?': '+od.chapter.title:''}</span>`;if(od.exam)b+=`<span class="badge gold" title="Examen oral">🎤 Examen oral</span>`;return b;})();
+
+  const todayAnchor=isToday||isNextClass?'today-anchor':'';
+  const cardId=isToday?'today-card':isNextClass?'next-card':'';
+  let h=`<div class="${cardClass} ${todayAnchor}" id="${cardId}">`;
+
+  // Cabecera
+  h+=`<div class="card-head">
+    <div class="card-num">
+      <div class="card-num-label">Clase</div>
+      <div class="card-num-val">${cn}</div>
+      <div class="card-num-week">Sem. ${week}</div>
+    </div>
+    <div class="card-meta">
+      <div class="card-date">${dayLabel}</div>
+      <div class="card-status">
+        ${statusBadge}
+        ${absents.length&&!holiday?`<span class="badge red">${absents.length} ausente${absents.length!==1?'s':''}</span>`:''}
+        ${oralBadges}
+      </div>
+    </div>
+    <div class="card-actions">
+      <button class="collapse-btn" onclick="toggleCollapse(this,event)" title="Expandir/colapsar"><i class="ti ti-chevron-up"></i></button>
+      <button class="btn sm" onclick="openEntry('${selGid}','${dateStr}',${cn},'${week}')"><i class="ti ti-${hasData||holiday?'edit':'plus'}"></i> ${hasData||holiday?'Editar':'Cargar'}</button>
+    </div>
+  </div>`;
+
+  // Cuerpo apilado
+  if(holiday){
+    h+=`<div class="card-body holiday-body"><div style="color:var(--amber);font-size:13px">🚫 ${recName?'Receso — '+recName:'Clase cancelada / Feriado'}</div></div>`;
+  } else {
+    h+=`<div class="card-body">`;
+    if(absents.length){
+      h+=`<div class="absent-chips">${absents.map(s=>`<div class="absent-chip">${avatar(s.name,18,s.gender||'')} ${s.name.split(' ')[0]}</div>`).join('')}</div>`;
+    }
+    if(entry.notes)    h+=`<div class="entry-line notes">${entry.notes}</div>`;
+    if(entry.material) h+=`<div class="entry-line"><span class="entry-tag">Material</span>${entry.material}</div>`;
+    if(entry.homework) h+=`<div class="entry-line"><span class="entry-tag">Tarea</span>${entry.homework}</div>`;
+    if(!hasData&&isFuture)  h+=`<div class="section-content empty">Clase futura — tocá "Cargar" para dejar material por adelantado</div>`;
+    if(!hasData&&!isFuture) h+=`<div class="section-content empty">Sin registrar</div>`;
+    h+=`</div>`;
+  }
+  h+=`</div>`;
+  return h;
+}
+
 
 // ── MODAL ─────────────────────────────────────────────────
 // Sibling groups that share the same content (same days, same level)
