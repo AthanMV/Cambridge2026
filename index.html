@@ -3,12 +3,18 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="theme-color" content="#0a0e1a">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='90'%3E🎓%3C/text%3E%3C/svg%3E">
 <title>Cambridge Institute 2026</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;600;700;900&family=DM+Sans:wght@300;400;500;600&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@2.44.0/tabler-icons.min.css">
 <style>
 *{box-sizing:border-box;margin:0;padding:0}
+button,.btn,.chip,.tab,input,select,textarea{touch-action:manipulation}
 html,body{height:100%;overflow:hidden}
 :root{--bg:#0a0e1a;--bg2:#111726;--bg3:#182032;--bg4:#212c44;--bg5:#2a3654;--border:rgba(255,255,255,0.07);--border2:rgba(255,255,255,0.13);--text:#eeedf6;--text2:#8a8898;--text3:#52505e;--accent:#3d72e3;--accent2:#5b8ef0;--accent-bg:rgba(61,114,227,0.12);--accent-border:rgba(61,114,227,0.3);--gold:#c9a84c;--gold2:#e8c96a;--gold-bg:rgba(201,168,76,0.14);--gold-border:rgba(201,168,76,0.32);--blue:#5aabff;--blue-bg:rgba(90,171,255,0.1);--blue-border:rgba(90,171,255,0.22);--green:#45d47a;--green-bg:rgba(69,212,122,0.1);--green-border:rgba(69,212,122,0.22);--red:#ff6b6b;--red-bg:rgba(255,107,107,0.1);--red-border:rgba(255,107,107,0.22);--amber:#f5a623;--amber-bg:rgba(245,166,35,0.1);--amber-border:rgba(245,166,35,0.22);--purple:#a78bfa;--purple-bg:rgba(167,139,250,0.1);--radius:8px;--radius-lg:12px;--radius-xl:16px;--sidebar:224px;--font-display:'Playfair Display',Georgia,serif;--font-body:'DM Sans',sans-serif;--font-mono:'DM Mono',monospace;--shadow:0 4px 28px rgba(0,0,0,0.5);--shadow-sm:0 2px 8px rgba(0,0,0,0.3);--shadow-card:0 1px 2px rgba(0,0,0,0.4),0 0 0 1px rgba(255,255,255,0.04)}
 [data-theme=light]{--bg:#f0eeea;--bg2:#fafaf8;--bg3:#f5f3ef;--bg4:#edeae3;--bg5:#e5e2d9;--border:rgba(0,0,0,0.07);--border2:rgba(0,0,0,0.13);--text:#1a1916;--text2:#58564f;--text3:#9a9890;--accent:#1d4ed8;--accent2:#1746b8;--accent-bg:rgba(29,78,216,0.08);--accent-border:rgba(29,78,216,0.22);--gold:#9a6e1a;--gold2:#7d5814;--gold-bg:rgba(154,110,26,0.1);--gold-border:rgba(154,110,26,0.25);--blue:#1560c8;--blue-bg:rgba(21,96,200,0.07);--blue-border:rgba(21,96,200,0.18);--green:#146832;--green-bg:rgba(20,104,50,0.07);--green-border:rgba(20,104,50,0.18);--red:#b52d2d;--red-bg:rgba(181,45,45,0.07);--red-border:rgba(181,45,45,0.18);--amber:#a0540a;--amber-bg:rgba(160,84,10,0.07);--amber-border:rgba(160,84,10,0.18);--purple:#5c32b0;--purple-bg:rgba(92,50,176,0.07);--shadow:0 4px 20px rgba(0,0,0,0.08);--shadow-sm:0 2px 6px rgba(0,0,0,0.06);--shadow-card:0 1px 3px rgba(0,0,0,0.08),0 0 0 1px rgba(0,0,0,0.04)}
@@ -1075,13 +1081,21 @@ window.addEventListener('offline', ()=>{
   setSyncStatus('offline','Sin conexión');
 });
 
+// Serialización con claves ordenadas: estable frente al reordenamiento de jsonb en Postgres
+function stableStr(v){
+  if(v===null||typeof v!=='object')return JSON.stringify(v)??'null';
+  if(Array.isArray(v))return '['+v.map(stableStr).join(',')+']';
+  return '{'+Object.keys(v).sort().map(k=>JSON.stringify(k)+':'+stableStr(v[k])).join(',')+'}';
+}
 function dbHash(d){
-  // A hash that captures attendance and journal changes, not just counts
+  // Hash de contenido COMPLETO (djb2): detecta cualquier cambio, no solo cambios de cantidad.
+  // El hash anterior no detectaba ediciones (renombrar alumno, corregir monto, cambiar fecha),
+  // lo que podía pisar cambios hechos desde otro dispositivo.
   try{
-    const attKeys=Object.values(d.attendance||{}).reduce((a,mk)=>a+Object.keys(mk).length,0);
-    const jrnKeys=Object.values(d.journal||{}).reduce((a,g)=>a+Object.keys(g).length,0);
-    const dayN=Object.values(d.dayNotes||{}).reduce((a,m)=>a+Object.keys(m).length,0);
-    return (d.payments||[]).length+'-'+(d.students||[]).length+'-'+(d.teacherPayments||[]).length+'-'+attKeys+'-'+dayN+'-'+jrnKeys+'-'+(d.grades?JSON.stringify(d.grades).length:0)+'-'+(d.oral?JSON.stringify(d.oral).length:0);
+    const s=stableStr(d||{});
+    let h=5381;
+    for(let i=0;i<s.length;i++){h=((h<<5)+h+s.charCodeAt(i))|0;}
+    return h+'-'+s.length;
   }catch(e){return'';}
 }
 
@@ -1150,7 +1164,7 @@ function getLocalBackups(){
   try{
     for(let i=0;i<localStorage.length;i++){
       const k=localStorage.key(i);
-      if(!k||!k.startsWith(BACKUP_PREFIX))continue;
+      if(!k||!k.startsWith(BK_PREFIX))continue;
       try{
         const snap=JSON.parse(localStorage.getItem(k)||'{}');
         if(!snap.ts||!snap.data)continue;
@@ -1335,7 +1349,7 @@ function getNewestBackup(){
     let newest=null;
     for(let i=0;i<localStorage.length;i++){
       const k=localStorage.key(i);
-      if(k&&k.startsWith(BACKUP_PREFIX)&&!k.includes('daily')){
+      if(k&&k.startsWith(BK_PREFIX)&&!k.includes('daily')){
         const v=localStorage.getItem(k);
         if(v&&(!newest||k>newest.k)) newest={k,v};
       }
@@ -1370,29 +1384,43 @@ function afterSave(){
   updatePendingBadge();
 }
 
-// Poll for remote changes every 25s (other devices editing)
-function startPolling(){
-  if(pollInterval) clearInterval(pollInterval);
-  pollInterval=setInterval(async()=>{
-    if(!isOnline) return;
-    try{
-      const r=await fetch(`${SUPA_URL}/rest/v1/institute_data?id=eq.main&select=data`,{
-        headers:{'apikey':SUPA_KEY,'Authorization':'Bearer '+SUPA_KEY}
-      });
-      if(!r.ok) return;
-      const rows=await r.json();
-      if(!rows||!rows[0]) return;
-      const h=dbHash(rows[0].data);
-      if(h!==lastRemoteHash && !pendingWrite){
-        // Only apply remote changes if no modal is open
-        const anyModalOpen=document.querySelector('.overlay.open');
-        if(anyModalOpen) return;
-        const d=rows[0].data;
-        lastRemoteHash=h;
-        ['groups','students','payments','families','teachers','teacherPayments','exams','boletin','waitlist','expenses','quickNotes'].forEach(k=>{if(d[k])db[k]=d[k];});;
-        if(d.attendance)db.attendance=d.attendance;
-        if(d.dayNotes)db.dayNotes=d.dayNotes;
-        if(d.settings)db.settings=d.settings;
+// Poll de cambios remotos (otros dispositivos editando)
+// Optimizado: primero consulta solo updated_at (bytes) y descarga los datos completos
+// únicamente si hubo un cambio. Se pausa con la pestaña oculta y sincroniza al volver.
+let lastSeenUpdatedAt='';
+function userIsTyping(){
+  const ae=document.activeElement;
+  return !!(ae&&(ae.tagName==='INPUT'||ae.tagName==='TEXTAREA'||ae.isContentEditable));
+}
+async function pollOnce(){
+  if(!isOnline||document.hidden) return;
+  try{
+    const meta=await fetch(`${SUPA_URL}/rest/v1/institute_data?id=eq.main&select=updated_at`,{
+      headers:{'apikey':SUPA_KEY,'Authorization':'Bearer '+SUPA_KEY},
+      signal:AbortSignal.timeout(10000)
+    });
+    if(!meta.ok) return;
+    const mrows=await meta.json();
+    const remoteUpdated=mrows?.[0]?.updated_at||'';
+    if(remoteUpdated && remoteUpdated===lastSeenUpdatedAt) return; // nada nuevo
+    const r=await fetch(`${SUPA_URL}/rest/v1/institute_data?id=eq.main&select=data`,{
+      headers:{'apikey':SUPA_KEY,'Authorization':'Bearer '+SUPA_KEY},
+      signal:AbortSignal.timeout(10000)
+    });
+    if(!r.ok) return;
+    const rows=await r.json();
+    if(!rows||!rows[0]) return;
+    lastSeenUpdatedAt=remoteUpdated;
+    const h=dbHash(rows[0].data);
+    if(h!==lastRemoteHash && !pendingWrite){
+      // No aplicar cambios remotos si hay un modal abierto o el usuario está tipeando
+      if(document.querySelector('.overlay.open')||userIsTyping()) return;
+      const d=rows[0].data;
+      lastRemoteHash=h;
+      ['groups','students','payments','families','teachers','teacherPayments','exams','boletin','waitlist','expenses','quickNotes'].forEach(k=>{if(d[k])db[k]=d[k];});
+      if(d.attendance)db.attendance=d.attendance;
+      if(d.dayNotes)db.dayNotes=d.dayNotes;
+      if(d.settings)db.settings=d.settings;
       if(d.grades)db.grades=d.grades;
       if(d.cambridge2025)db.cambridge2025=d.cambridge2025;
       if(d.classTypes)db.classTypes=d.classTypes;
@@ -1400,11 +1428,19 @@ function startPolling(){
       if(d.classLogs)db.classLogs=d.classLogs;
       if(d.journal)db.journal=d.journal;
       if(d.oral)db.oral=d.oral;
-        refreshCurrentPage();
-        toast('Datos actualizados desde otro dispositivo');
-      }
-    }catch(e){}
-  },10000);
+      refreshCurrentPage();
+      toast('Datos actualizados desde otro dispositivo');
+    }
+  }catch(e){}
+}
+function startPolling(){
+  if(pollInterval) clearInterval(pollInterval);
+  pollInterval=setInterval(pollOnce,10000);
+  // Al volver a la pestaña, sincronizar de inmediato
+  if(!startPolling._visBound){
+    startPolling._visBound=true;
+    document.addEventListener('visibilitychange',()=>{if(!document.hidden)pollOnce();});
+  }
 }
 
 function setSyncStatus(state,label){
@@ -1986,7 +2022,7 @@ function waitlistCardHtml(w){
     + (w.phone ? '<div style="font-size:13px;color:var(--text2);display:flex;align-items:center;gap:8px"><i class="ti ti-phone" style="color:var(--accent)"></i>'+w.phone
         + (phone.length>=8 ? ' <a href="https://wa.me/549'+phone+'" target="_blank" rel="noopener" style="color:var(--green);text-decoration:none;font-weight:600;font-size:12px"><i class="ti ti-brand-whatsapp"></i> WhatsApp</a>' : '')
         + '</div>' : '')
-    + (w.notes ? '<div style="font-size:12px;color:var(--text3);line-height:1.5;border-top:1px solid var(--border);padding-top:8px">'+w.notes+'</div>' : '')
+    + (w.notes ? '<div style="font-size:12px;color:var(--text3);line-height:1.5;border-top:1px solid var(--border);padding-top:8px">'+oEsc(w.notes)+'</div>' : '')
     + '</div>';
 }
 
@@ -2005,7 +2041,7 @@ function openWaitlistModal(id){
     + '<div class="field"><label>Teléfono</label><input id="wl-phone" value="'+(w?(w.phone||''):'')+'" placeholder="341..."></div>'
     + '</div>'
     + '<div class="field" style="margin-bottom:14px"><label>Notas</label>'
-    + '<textarea id="wl-notes" rows="3" placeholder="Disponibilidad horaria, cómo se enteró, etc.">'+(w?(w.notes||''):'')+'</textarea></div>'
+    + '<textarea id="wl-notes" rows="3" placeholder="Disponibilidad horaria, cómo se enteró, etc.">'+oEsc(w?(w.notes||''):'')+'</textarea></div>'
     + '<div class="modal-footer">'
     + '<button class="btn" onclick="closeModal(\'m-waitlist\')">Cancelar</button>'
     + '<button class="btn primary" onclick="saveWaitlistEntry()"><i class="ti ti-device-floppy"></i> Guardar</button>'
@@ -2673,7 +2709,7 @@ function renderExpenses(){
     const d = e.date ? new Date(e.date+'T12:00:00').toLocaleDateString('es-AR',{day:'numeric',month:'short'}) : '';
     rows += '<tr>'
       + '<td style="padding:9px 12px;border-bottom:1px solid var(--border)"><span class="badge gold">'+(e.cat||'Otros')+'</span></td>'
-      + '<td style="padding:9px 12px;border-bottom:1px solid var(--border)">'+(e.desc||'')+'</td>'
+      + '<td style="padding:9px 12px;border-bottom:1px solid var(--border)">'+oEsc(e.desc||'')+'</td>'
       + '<td style="padding:9px 12px;border-bottom:1px solid var(--border);color:var(--text3);font-size:12px">'+d+'</td>'
       + '<td style="padding:9px 12px;border-bottom:1px solid var(--border);text-align:right;font-family:var(--font-mono);font-weight:600;color:var(--red)">-'+fm(e.amount)+'</td>'
       + '<td style="padding:9px 8px;border-bottom:1px solid var(--border);text-align:center"><button class="btn xs danger" onclick="deleteExpense(\''+e.id+'\')"><i class="ti ti-trash"></i></button></td>'
@@ -2944,7 +2980,7 @@ function quickNotesCardHtml(){
     items += '<div style="display:flex;align-items:center;gap:10px;padding:8px 10px;border-radius:9px;background:var(--bg3);margin-bottom:6px">'
       + '<div onclick="toggleQuickNote(\''+n.id+'\')" style="width:20px;height:20px;border-radius:6px;border:2px solid '+(n.done?'var(--green)':'var(--border2)')+';background:'+(n.done?'var(--green)':'transparent')+';cursor:pointer;flex-shrink:0;display:flex;align-items:center;justify-content:center">'
       + (n.done?'<i class="ti ti-check" style="color:#fff;font-size:12px"></i>':'')+'</div>'
-      + '<span style="flex:1;font-size:13px;color:'+(n.done?'var(--text3)':'var(--text)')+';'+(n.done?'text-decoration:line-through':'')+'">'+n.text+'</span>'
+      + '<span style="flex:1;font-size:13px;color:'+(n.done?'var(--text3)':'var(--text)')+';'+(n.done?'text-decoration:line-through':'')+'">'+oEsc(n.text)+'</span>'
       + '<button class="btn xs" onclick="deleteQuickNote(\''+n.id+'\')" style="flex-shrink:0"><i class="ti ti-x"></i></button>'
       + '</div>';
   });
@@ -3823,7 +3859,7 @@ function renderPayments(forceMonth){
   document.getElementById('page-payments').innerHTML=`
     <div class="page-header">
       <div><div class="page-title">Pagos</div><div class="page-subtitle">${paidC} pagados · ${pending} pendientes · ${students.length} mostrados</div></div>
-      <div class="page-actions"><input type="month" id="pay-month-input" value="${month}" onchange="renderPayments(this.value)" style="background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius);padding:7px 10px;color:var(--text);font-family:var(--font-body);font-size:13px;outline:none"></div>
+      <div class="page-actions"><button class="btn" onclick="editBillTemplate()" title="Editar mensaje de cobro"><i class="ti ti-message-cog"></i> Plantilla</button><input type="month" id="pay-month-input" value="${month}" onchange="renderPayments(this.value)" style="background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius);padding:7px 10px;color:var(--text);font-family:var(--font-body);font-size:13px;outline:none"></div>
     </div>
     <div class="chips" id="pay-chips" style="margin-bottom:6px">
       <span class="chip ${!gid?'active':''}" data-gid="" onclick="groupChipClick(this)">Todos los grupos</span>
@@ -3852,7 +3888,7 @@ function renderPayments(forceMonth){
         <td style="font-size:12px;color:var(--text2)">${pay?fdate(pay.date):''}</td>
         <td><div class="td-actions">
           ${paid?`${pay.partial?`<button class="btn xs primary" onclick="openPayModal('${s.id}','${month}','${(pay.total||0)-pay.amount}')" title="Cobrar saldo restante"><i class="ti ti-plus"></i> Saldo</button>`:''}<button class="btn xs danger" onclick="unmarkPay('${s.id}','${month}')"><i class="ti ti-x"></i></button>`:
-          `<button class="btn xs primary" onclick="openPayModal('${s.id}','${month}','${g.fee}')"><i class="ti ti-check"></i> Marcar</button>`}
+          `<button class="btn xs" onclick="copyBillMsg('${s.id}','${month}')" title="Copiar mensaje de cobro / abrir WhatsApp" style="color:var(--green)"><i class="ti ti-brand-whatsapp"></i></button><button class="btn xs primary" onclick="openPayModal('${s.id}','${month}','${g.fee}')"><i class="ti ti-check"></i> Marcar</button>`}
         </div></td>
       </tr>`;
     }).join('')}
@@ -3914,6 +3950,130 @@ const EXTRA_CONCEPTS = [
 ];
 
 function isExtraConcept(month){ return (month||'').startsWith('extra-'); }
+
+/* ---- MENSAJES DE COBRO ----
+   Genera el mensaje mensual de arancel listo para WhatsApp.
+   Plantilla editable (botón "Plantilla" en Pagos) con variables:
+   {alumno} {mes} {monto} {grupo}
+─────────────────────────────────────────────── */
+const BILL_TPL_DEFAULT='¡Hola! ¿Cómo estás? 😊 Te paso el arancel de inglés de {mes}: *{monto}*. Cualquier cosa avisame. ¡Muchas gracias!';
+function billTemplate(){ return (db.settings&&db.settings.billTemplate)||BILL_TPL_DEFAULT; }
+function monthNameEs(month){
+  const [y,m]=(month||'').split('-').map(Number);
+  if(!y||!m) return month||'';
+  return new Date(y,m-1,1).toLocaleDateString('es-AR',{month:'long'})+' '+y;
+}
+function buildBillMsg(sid,month){
+  const s=db.students.find(x=>x.id===sid); if(!s)return '';
+  const g=getGroup(s.groupId); const fam=getFam(sid);
+  const extra=isExtraConcept(month);
+  const amount=(fam&&!extra)?famTotal(fam):(Number(g.fee)||0);
+  const mes=extra?extraLabel(month):monthNameEs(month);
+  let nombre=s.name.split(' ')[0];
+  if(fam&&!extra){
+    const names=(fam.memberIds||[]).map(id=>{const x=db.students.find(y=>y.id===id);return x?x.name.split(' ')[0]:'';}).filter(Boolean);
+    if(names.length)nombre=names.join(' y ');
+  }
+  return billTemplate()
+    .replace(/{mes}/g,mes)
+    .replace(/{monto}/g,fm(amount))
+    .replace(/{alumno}/g,nombre)
+    .replace(/{grupo}/g,g.name||'');
+}
+// Normaliza teléfonos argentinos para wa.me (549 + 10 dígitos)
+function waPhoneFor(s){
+  let raw=(s.waTarget==='mom'?(s.momPhone||s.dadPhone):(s.dadPhone||s.momPhone))||'';
+  let d=String(raw).replace(/\D/g,'');
+  if(!d)return '';
+  if(d.startsWith('0'))d=d.slice(1);
+  if(d.length===10)d='549'+d;
+  else if(d.startsWith('54')&&!d.startsWith('549')&&d.length===12)d='549'+d.slice(2);
+  return d.length>=11?d:'';
+}
+async function copyBillMsg(sid,month){
+  const msg=buildBillMsg(sid,month);
+  if(!msg){toast('No se pudo generar el mensaje','error');return;}
+  let copied=false;
+  try{await navigator.clipboard.writeText(msg);copied=true;}
+  catch(e){
+    try{const ta=document.createElement('textarea');ta.value=msg;ta.style.position='fixed';ta.style.opacity='0';document.body.appendChild(ta);ta.select();document.execCommand('copy');ta.remove();copied=true;}catch(e2){}
+  }
+  const s=db.students.find(x=>x.id===sid);
+  const ph=s?waPhoneFor(s):'';
+  if(ph){
+    window.open('https://wa.me/'+ph+'?text='+encodeURIComponent(msg),'_blank','noopener');
+    toast('Mensaje listo — abriendo WhatsApp');
+  } else {
+    toast(copied?'Mensaje de cobro copiado (sin teléfono cargado)':'No se pudo copiar el mensaje',copied?'success':'error');
+  }
+}
+function editBillTemplate(){
+  let ov=document.getElementById('m-billtpl');
+  if(!ov){
+    ov=document.createElement('div');
+    ov.className='overlay';ov.id='m-billtpl';
+    ov.innerHTML='<div class="modal" style="max-width:540px">'
+      +'<div class="modal-title" style="font-family:var(--font-display);font-size:19px;font-weight:700;margin-bottom:12px">Plantilla del mensaje de cobro</div>'
+      +'<div style="font-size:12.5px;color:var(--text2);margin-bottom:10px;line-height:1.6">Variables disponibles: <code>{alumno}</code> <code>{mes}</code> <code>{monto}</code> <code>{grupo}</code>. Los asteriscos hacen <b>negrita</b> en WhatsApp.</div>'
+      +'<textarea id="billtpl-input" rows="5" style="width:100%;background:var(--bg3);border:1px solid var(--border2);border-radius:var(--radius);padding:10px 12px;color:var(--text);font-family:inherit;font-size:13px;resize:vertical;outline:none"></textarea>'
+      +'<div style="display:flex;justify-content:space-between;gap:8px;margin-top:14px">'
+      +'<button class="btn" onclick="document.getElementById(\'billtpl-input\').value=BILL_TPL_DEFAULT"><i class="ti ti-restore"></i> Predeterminada</button>'
+      +'<div style="display:flex;gap:8px"><button class="btn" onclick="closeModal(\'m-billtpl\')">Cancelar</button>'
+      +'<button class="btn primary" onclick="saveBillTemplate()"><i class="ti ti-check"></i> Guardar</button></div></div></div>';
+    document.body.appendChild(ov);
+  }
+  document.getElementById('billtpl-input').value=billTemplate();
+  openModal('m-billtpl');
+}
+function saveBillTemplate(){
+  const v=(document.getElementById('billtpl-input').value||'').trim();
+  const st=getSettings();
+  if(v&&v!==BILL_TPL_DEFAULT)st.billTemplate=v; else delete st.billTemplate;
+  scheduleSave();
+  closeModal('m-billtpl');
+  toast('Plantilla guardada');
+}
+
+/* ---- BÚSQUEDA RÁPIDA DE ALUMNOS (Ctrl/Cmd+K) ----
+   Paleta para saltar al perfil de cualquier alumno desde cualquier pantalla. */
+function openQuickSearch(){
+  let ov=document.getElementById('m-qsearch');
+  if(!ov){
+    ov=document.createElement('div');
+    ov.className='overlay';ov.id='m-qsearch';
+    ov.innerHTML='<div class="modal" style="max-width:440px;padding:14px">'
+      +'<input id="qs-input" placeholder="Buscar alumno…  (Esc para cerrar)" autocomplete="off" '
+      +'style="width:100%;background:var(--bg3);border:1px solid var(--border2);border-radius:var(--radius);padding:11px 14px;color:var(--text);font-family:inherit;font-size:14px;outline:none" '
+      +'oninput="qsFilter(this.value)" onkeydown="if(event.key===\'Enter\'&&window._qsFirst){closeModal(\'m-qsearch\');showProfile(window._qsFirst)}">'
+      +'<div id="qs-results" style="margin-top:8px;max-height:340px;overflow-y:auto"></div></div>';
+    document.body.appendChild(ov);
+    // Cerrar al hacer clic fuera del modal
+    ov.addEventListener('click',ev=>{if(ev.target===ov)closeModal('m-qsearch');});
+  }
+  openModal('m-qsearch');
+  const inp=document.getElementById('qs-input');
+  inp.value='';qsFilter('');
+  setTimeout(()=>inp.focus(),40);
+}
+function qsFilter(q){
+  q=(q||'').trim().toLowerCase();
+  const res=(db.students||[])
+    .filter(s=>!q||s.name.toLowerCase().includes(q))
+    .sort((a,b)=>a.name.localeCompare(b.name))
+    .slice(0,12);
+  window._qsFirst=res.length?res[0].id:null;
+  const box=document.getElementById('qs-results');
+  if(!box)return;
+  box.innerHTML=res.length?res.map((s,i)=>{
+    const g=getGroup(s.groupId);
+    return '<div onclick="closeModal(\'m-qsearch\');showProfile(\''+s.id+'\')" '
+      +'style="display:flex;align-items:center;gap:10px;padding:8px 10px;border-radius:9px;cursor:pointer;'+(i===0?'background:var(--accent-bg);':'')+'" '
+      +'onmouseover="this.style.background=\'var(--bg3)\'" onmouseout="this.style.background=\''+(i===0?'var(--accent-bg)':'transparent')+'\'">'
+      +avatar(s.name,28,s.gender||'')
+      +'<span style="flex:1;font-size:13.5px">'+oEsc(s.name)+'</span>'
+      +'<span class="badge gold" style="font-size:10px">'+oEsc(g.name)+'</span></div>';
+  }).join(''):'<div style="padding:14px;text-align:center;color:var(--text3);font-size:13px">Sin resultados</div>';
+}
 
 function extraLabel(month){
   const e = EXTRA_CONCEPTS.find(x=>x.key===month);
@@ -5775,7 +5935,7 @@ function renderGradesContent(gid,tri,filterSid){
                 </div>
                 ${entries.length?`<div style="display:flex;flex-wrap:wrap;gap:3px">
                   ${entries.map((e,i)=>`<span style="background:${e.score==='A'?'var(--amber-bg)':'var(--bg3)'};border:1px solid var(--border);border-radius:5px;padding:2px 7px;font-size:11px;display:inline-flex;align-items:center;gap:3px">
-                    ${e.score==='A'?'A':e.score}${e.desc?` <span style="color:var(--text3);font-size:10px">${e.desc}</span>`:''}
+                    ${e.score==='A'?'A':e.score}${e.desc?` <span style="color:var(--text3);font-size:10px">${oEsc(e.desc)}</span>`:''}
                     <span onclick="deleteGradeEntry('${gid}','${s.id}','${tri}','${subj}',${i})" style="cursor:pointer;color:var(--red);font-size:10px;margin-left:2px;line-height:1">×</span>
                   </span>`).join('')}
                 </div>`:''}
@@ -6372,9 +6532,9 @@ function journalDateCard(gid, dateStr, cn, week, today){
       absents.forEach(nm=>{center+='<span style="display:inline-flex;align-items:center;gap:4px;padding:3px 9px;border-radius:20px;font-size:11px;font-weight:600;background:var(--red-bg);color:var(--red);border:1px solid rgba(192,57,43,0.25);margin:2px">'+avatar(nm,18,'')+nm.split(' ')[0]+'</span>';});
       center+='</div>';
     }
-    if(entry.notes)    center+='<div style="font-size:13px;font-weight:500;color:var(--text);margin-bottom:4px">'+entry.notes+'</div>';
-    if(entry.material) center+='<div style="font-size:12px;color:var(--text2);margin-bottom:3px"><span style="color:var(--text3);font-size:10px;text-transform:uppercase">Material · </span>'+entry.material+'</div>';
-    if(entry.homework) center+='<div style="font-size:12px;color:var(--text2)"><span style="color:var(--text3);font-size:10px;text-transform:uppercase">Tarea · </span>'+entry.homework+'</div>';
+    if(entry.notes)    center+='<div style="font-size:13px;font-weight:500;color:var(--text);margin-bottom:4px">'+oEsc(entry.notes)+'</div>';
+    if(entry.material) center+='<div style="font-size:12px;color:var(--text2);margin-bottom:3px"><span style="color:var(--text3);font-size:10px;text-transform:uppercase">Material · </span>'+oEsc(entry.material)+'</div>';
+    if(entry.homework) center+='<div style="font-size:12px;color:var(--text2)"><span style="color:var(--text3);font-size:10px;text-transform:uppercase">Tarea · </span>'+oEsc(entry.homework)+'</div>';
     if(!hasData && isFut)  center+='<div style="font-size:12px;color:var(--text3);font-style:italic">Clase futura — tocá para cargar material por adelantado</div>';
     if(!hasData && !isFut) center+='<div style="font-size:12px;color:var(--text3);font-style:italic">Sin registrar</div>';
     if(isToday) center+='<span class="badge gold" style="margin-top:6px;display:inline-block">Hoy</span>';
@@ -6505,6 +6665,11 @@ document.addEventListener('keydown', function(e){
     e.preventDefault();
     const s=document.querySelector('.search-input');
     if(s){s.focus();s.select();}
+  }
+  // Ctrl+K / Cmd+K: búsqueda rápida de alumnos
+  if((e.ctrlKey||e.metaKey)&&(e.key==='k'||e.key==='K')){
+    e.preventDefault();
+    openQuickSearch();
   }
 });
 
