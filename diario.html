@@ -3,12 +3,18 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="theme-color" content="#0a0e1a">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='90'%3E📔%3C/text%3E%3C/svg%3E">
 <title>Diario de Clases — Cambridge Institute 2026</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;600;700;900&family=DM+Sans:wght@300;400;500;600&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@2.44.0/tabler-icons.min.css">
 <style>
 *{box-sizing:border-box;margin:0;padding:0}
+button,.btn,.chip,.tab,input,select,textarea{touch-action:manipulation}
 html,body{min-height:100%;font-family:'DM Sans',sans-serif;font-size:14px}
 
 :root{
@@ -443,12 +449,20 @@ let pollTimer=null;
 function curMonth(){const n=new Date();return n.getFullYear()+'-'+String(n.getMonth()+1).padStart(2,'0');}
 function today(){return new Date().toISOString().slice(0,10);}
 function getGroup(id){return db.groups.find(g=>g.id===id)||{name:'—',days:[],time:''};}
+// Serialización con claves ordenadas (estable frente a jsonb) + hash djb2 de contenido completo.
+// Detecta cualquier edición remota (editar una entrada del diario, corregir una fecha), no solo altas/bajas.
+function stableStr(v){
+  if(v===null||typeof v!=='object')return JSON.stringify(v)??'null';
+  if(Array.isArray(v))return '['+v.map(stableStr).join(',')+']';
+  return '{'+Object.keys(v).sort().map(k=>JSON.stringify(k)+':'+stableStr(v[k])).join(',')+'}';
+}
+function esc(s){return String(s==null?'':s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');}
 function dbHash(d){
   try{
-    const attK=Object.values(d.attendance||{}).reduce((a,m)=>a+Object.keys(m).length,0);
-    const jrnK=Object.values(d.journal||{}).reduce((a,g)=>a+Object.keys(g).length,0);
-    const dayN=Object.values(d.dayNotes||{}).reduce((a,m)=>a+Object.keys(m).length,0);
-    return (d.students||[]).length+'-'+attK+'-'+dayN+'-'+jrnK+'-'+(d.oral?JSON.stringify(d.oral).length:0);
+    const s=stableStr(d||{});
+    let h=5381;
+    for(let i=0;i<s.length;i++){h=((h<<5)+h+s.charCodeAt(i))|0;}
+    return h+'-'+s.length;
   }catch(e){return '';}
 }
 
@@ -708,27 +722,47 @@ function scheduleSave(){
   saveTimer=setTimeout(()=>saveData(),1200);
 }
 
+let lastSeenUpdatedAt='';
+function userIsTyping(){
+  const ae=document.activeElement;
+  return !!(ae&&(ae.tagName==='INPUT'||ae.tagName==='TEXTAREA'||ae.isContentEditable));
+}
+async function pollOnce(){
+  if(document.hidden)return;
+  try{
+    // Chequeo liviano: solo updated_at. Descarga los datos completos únicamente si algo cambió.
+    const meta=await fetch(`${SUPA_URL}/rest/v1/institute_data?id=eq.main&select=updated_at`,{headers:{'apikey':SUPA_KEY,'Authorization':'Bearer '+SUPA_KEY},signal:AbortSignal.timeout(10000)});
+    if(!meta.ok)return;
+    const mrows=await meta.json();
+    const remoteUpdated=mrows?.[0]?.updated_at||'';
+    if(remoteUpdated&&remoteUpdated===lastSeenUpdatedAt)return;
+    const r=await fetch(`${SUPA_URL}/rest/v1/institute_data?id=eq.main&select=data`,{headers:{'apikey':SUPA_KEY,'Authorization':'Bearer '+SUPA_KEY},signal:AbortSignal.timeout(10000)});
+    const rows=await r.json();if(!rows?.[0])return;
+    lastSeenUpdatedAt=remoteUpdated;
+    const h=dbHash(rows[0].data);
+    if(h!==lastHash&&!saveTimer){
+      // No pisar la pantalla si el usuario está escribiendo una entrada
+      if(userIsTyping())return;
+      const d=rows[0].data;lastHash=h;
+      ['groups','students','payments','families','teachers','teacherPayments'].forEach(k=>{if(d[k])db[k]=d[k];});
+      if(d.attendance)db.attendance=d.attendance;if(d.dayNotes)db.dayNotes=d.dayNotes;
+      if(d.settings)db.settings=d.settings;if(d.grades)db.grades=d.grades;
+      if(d.classTypes)db.classTypes=d.classTypes;if(d.classLogs)db.classLogs=d.classLogs;
+      if(d.schools)db.schools=d.schools;if(d.journal)db.journal=d.journal;
+      if(d.oral)db.oral=d.oral;
+      db.groups.forEach(g=>{const sc=GROUP_SCHEDULE[g.name];if(sc){if(!g.days?.length)g.days=sc.days;if(!g.time)g.time=sc.time;}});
+      setSyncStatus('ok','Actualizado');
+      renderMain();
+    }
+  }catch(e){}
+}
 function startPolling(){
   if(pollTimer)clearInterval(pollTimer);
-  pollTimer=setInterval(async()=>{
-    try{
-      const r=await fetch(`${SUPA_URL}/rest/v1/institute_data?id=eq.main&select=data`,{headers:{'apikey':SUPA_KEY,'Authorization':'Bearer '+SUPA_KEY},signal:AbortSignal.timeout(10000)});
-      const rows=await r.json();if(!rows?.[0])return;
-      const h=dbHash(rows[0].data);
-      if(h!==lastHash&&!saveTimer){
-        const d=rows[0].data;lastHash=h;
-        ['groups','students','payments','families','teachers','teacherPayments'].forEach(k=>{if(d[k])db[k]=d[k];});
-        if(d.attendance)db.attendance=d.attendance;if(d.dayNotes)db.dayNotes=d.dayNotes;
-        if(d.settings)db.settings=d.settings;if(d.grades)db.grades=d.grades;
-        if(d.classTypes)db.classTypes=d.classTypes;if(d.classLogs)db.classLogs=d.classLogs;
-        if(d.schools)db.schools=d.schools;if(d.journal)db.journal=d.journal;
-        if(d.oral)db.oral=d.oral;
-        db.groups.forEach(g=>{const sc=GROUP_SCHEDULE[g.name];if(sc){if(!g.days?.length)g.days=sc.days;if(!g.time)g.time=sc.time;}});
-        setSyncStatus('ok','Actualizado');
-        renderMain();
-      }
-    }catch(e){}
-  },20000);
+  pollTimer=setInterval(pollOnce,20000);
+  if(!startPolling._visBound){
+    startPolling._visBound=true;
+    document.addEventListener('visibilitychange',()=>{if(!document.hidden)pollOnce();});
+  }
 }
 
 // ── NAVIGATION ───────────────────────────────────────────
@@ -1031,9 +1065,9 @@ function classCard(dateStr,cn,week,todayStr,nextClassDate){
     if(absents.length){
       h+=`<div class="absent-chips">${absents.map(s=>`<div class="absent-chip">${avatar(s.name,18,s.gender||'')} ${s.name.split(' ')[0]}</div>`).join('')}</div>`;
     }
-    if(entry.notes)    h+=`<div class="entry-line notes">${entry.notes}</div>`;
-    if(entry.material) h+=`<div class="entry-line"><span class="entry-tag">Material</span>${entry.material}</div>`;
-    if(entry.homework) h+=`<div class="entry-line"><span class="entry-tag">Tarea</span>${entry.homework}</div>`;
+    if(entry.notes)    h+=`<div class="entry-line notes">${esc(entry.notes)}</div>`;
+    if(entry.material) h+=`<div class="entry-line"><span class="entry-tag">Material</span>${esc(entry.material)}</div>`;
+    if(entry.homework) h+=`<div class="entry-line"><span class="entry-tag">Tarea</span>${esc(entry.homework)}</div>`;
     if(!hasData&&isFuture)  h+=`<div class="section-content empty">Clase futura — tocá "Cargar" para dejar material por adelantado</div>`;
     if(!hasData&&!isFuture) h+=`<div class="section-content empty">Sin registrar</div>`;
     h+=`</div>`;
