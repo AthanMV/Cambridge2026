@@ -3,12 +3,18 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="theme-color" content="#f4f2ec">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='90'%3E🍎%3C/text%3E%3C/svg%3E">
 <title>Cambridge Institute — Profesora</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;600;700&family=DM+Sans:wght@300;400;500;600&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@2.44.0/tabler-icons.min.css">
 <style>
 *{box-sizing:border-box;margin:0;padding:0}
+button,.btn,.chip,.tab,input,select,textarea{touch-action:manipulation}
 html,body{min-height:100%;font-family:'DM Sans',sans-serif;font-size:14px}
 :root{
   --bg:#f4f2ec;--bg2:#fff;--bg3:#f9f8f4;--bg4:#eeece4;
@@ -185,11 +191,19 @@ let lastHash='';let pollInterval=null;let currentTab='att';
 function curMonth(){const n=new Date();return n.getFullYear()+'-'+String(n.getMonth()+1).padStart(2,'0');}
 function getGroup(id){return db.groups.find(g=>g.id===id)||{name:'—',days:[],time:''};}
 function parseDOB(d){if(!d)return null;const[y,m,v]=d.split('-').map(Number);return new Date(y,m-1,v);}
+// Serialización con claves ordenadas (estable frente a jsonb) + hash djb2 de contenido completo.
+// Detecta cualquier edición remota (renombres, correcciones de nota, cambios de fecha), no solo cambios de cantidad.
+function stableStr(v){
+  if(v===null||typeof v!=='object')return JSON.stringify(v)??'null';
+  if(Array.isArray(v))return '['+v.map(stableStr).join(',')+']';
+  return '{'+Object.keys(v).sort().map(function(k){return JSON.stringify(k)+':'+stableStr(v[k]);}).join(',')+'}';
+}
 function dbHash(d){
   try{
-    const attK=Object.values(d.attendance||{}).reduce((a,m)=>a+Object.keys(m).length,0);
-    const dayN=Object.values(d.dayNotes||{}).reduce((a,m)=>a+Object.keys(m).length,0);
-    return (d.students||[]).length+'-'+attK+'-'+dayN+'-'+JSON.stringify(d.grades||{}).length+'-'+JSON.stringify(d.exams||[]).length+'-'+JSON.stringify((d.settings&&d.settings.recesos)||[]).length;
+    const s=stableStr(d||{});
+    let h=5381;
+    for(let i=0;i<s.length;i++){h=((h<<5)+h+s.charCodeAt(i))|0;}
+    return h+'-'+s.length;
   }catch(e){return '';}
 }
 function recesoOn(dateStr){
@@ -250,29 +264,45 @@ async function loadData(){
   }
 }
 
+let lastSeenUpdatedAt='';
+async function pollOnce(){
+  if(document.hidden)return;
+  try{
+    // Chequeo liviano: solo updated_at. Descarga los datos completos únicamente si algo cambió.
+    var meta=await fetch(SUPA_URL+'/rest/v1/institute_data?id=eq.main&select=updated_at',{
+      headers:{'apikey':SUPA_KEY,'Authorization':'Bearer '+SUPA_KEY}
+    });
+    if(!meta.ok)return;
+    var mrows=await meta.json();
+    var remoteUpdated=(mrows&&mrows[0]&&mrows[0].updated_at)||'';
+    if(remoteUpdated&&remoteUpdated===lastSeenUpdatedAt)return;
+    var r=await fetch(SUPA_URL+'/rest/v1/institute_data?id=eq.main&select=data',{
+      headers:{'apikey':SUPA_KEY,'Authorization':'Bearer '+SUPA_KEY}
+    });
+    var rows=await r.json();
+    if(!rows||!rows[0])return;
+    lastSeenUpdatedAt=remoteUpdated;
+    var h=dbHash(rows[0].data);
+    if(h!==lastHash){
+      var d=rows[0].data;lastHash=h;
+      if(d.groups)db.groups=d.groups;if(d.students)db.students=d.students;
+      if(d.attendance)db.attendance=d.attendance;if(d.dayNotes)db.dayNotes=d.dayNotes;
+      if(d.settings)db.settings=d.settings;
+      if(d.grades)db.grades=d.grades;
+      if(d.exams)db.exams=d.exams;
+      db.groups.forEach(function(g){var sc=GROUP_SCHEDULE[g.name];if(sc){if(!g.days||!g.days.length)g.days=sc.days;if(!g.time)g.time=sc.time;}});
+      setSyncStatus('ok','Actualizado');
+      if(currentTab==='att')renderAtt();else if(currentTab==='exams')renderExamsView();else renderGrades();
+    }
+  }catch(e){}
+}
 function startPolling(){
   if(pollInterval)clearInterval(pollInterval);
-  pollInterval=setInterval(async function(){
-    try{
-      var r=await fetch(SUPA_URL+'/rest/v1/institute_data?id=eq.main&select=data',{
-        headers:{'apikey':SUPA_KEY,'Authorization':'Bearer '+SUPA_KEY}
-      });
-      var rows=await r.json();
-      if(!rows||!rows[0])return;
-      var h=dbHash(rows[0].data);
-      if(h!==lastHash){
-        var d=rows[0].data;lastHash=h;
-        if(d.groups)db.groups=d.groups;if(d.students)db.students=d.students;
-        if(d.attendance)db.attendance=d.attendance;if(d.dayNotes)db.dayNotes=d.dayNotes;
-        if(d.settings)db.settings=d.settings;
-        if(d.grades)db.grades=d.grades;
-        if(d.exams)db.exams=d.exams;
-        db.groups.forEach(function(g){var sc=GROUP_SCHEDULE[g.name];if(sc){if(!g.days||!g.days.length)g.days=sc.days;if(!g.time)g.time=sc.time;}});
-        setSyncStatus('ok','Actualizado');
-        if(currentTab==='att')renderAtt();else if(currentTab==='exams')renderExamsView();else renderGrades();
-      }
-    }catch(e){}
-  },20000);
+  pollInterval=setInterval(pollOnce,20000);
+  if(!startPolling._visBound){
+    startPolling._visBound=true;
+    document.addEventListener('visibilitychange',function(){if(!document.hidden)pollOnce();});
+  }
 }
 
 /* TABS */
